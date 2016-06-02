@@ -1,0 +1,10 @@
+{
+  "name": "b2",
+  "version": "0.0.1",
+  "description": "isomorphic web lib extract from meteor",
+  "repository": "",
+  "dependencies": {
+  },
+  "author": "",
+  "license": "MIT"
+}
