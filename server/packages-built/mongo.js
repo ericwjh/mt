@@ -2,7 +2,6 @@
 
   /* Imports */
   var Meteor = Package.meteor.Meteor;
-  var global = Package.meteor.global;
   var meteorEnv = Package.meteor.meteorEnv;
   var NpmModuleMongodb = Package['npm-mongo'].NpmModuleMongodb;
   var NpmModuleMongodbVersion = Package['npm-mongo'].NpmModuleMongodbVersion;

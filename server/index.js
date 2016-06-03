@@ -277,10 +277,10 @@ Fiber(function() {
 		// require('./packages-built/srp/biginteger.js')
 		// require('./packages-built/srp/srp.js')
 
-	require('./packages-built/email.js')
+	// require('./packages-built/email.js')
 		// require('./packages-built/email/email.js')
 
-	require('./packages-built/accounts-password.js')
+	// require('./packages-built/accounts-password.js')
 		// require('./packages-built/accounts-password/email_templates.js')
 		// require('./packages-built/accounts-password/password_server.js')
 
@@ -309,12 +309,12 @@ Fiber(function() {
 
 	// require('./packages-built/templating.js')
 
-	require('./packages-built/autoupdate.js')
+	// require('./packages-built/autoupdate.js')
 		// require('./packages-built/autoupdate/autoupdate_server.js')
 
 	// require('./packages-built/global-imports.js')
 
-	// require('./../../bundle/server.bundle.js')
+	require('../../app/main_server.js')
 
 	require('./packages-built/service-configuration')
 

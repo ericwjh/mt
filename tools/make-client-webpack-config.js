@@ -18,9 +18,9 @@ module.exports = function(options) {
 	var entry = options.entry || [path.resolve(__dirname,'../../app/main_client')];
 
 	var babelQueryBase = {
-		presets: ["es2015", "stage-1", "react"],
-		plugins: ["transform-decorators-legacy"],
-		cacheDirectory: true
+		presets: ["es2015-without-strict", "stage-1", "react"]//.map(_=>require(`babel-preset-${_}`)),
+		// plugins: ["transform-decorators-legacy"],
+		// cacheDirectory: true
 	};
 
 	// var config = {
@@ -73,8 +73,8 @@ module.exports = function(options) {
 		module: {
 			loaders: [{
 				test: /\.jsx?$/,
-				loader: 'babel',
-				exclude: /node_modules|lib/,
+				loader: 'babel-loader',
+				exclude: /node_modules/,
 				query: babelQueryBase
 			},{
 				test: /\.css$/,

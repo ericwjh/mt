@@ -81,7 +81,7 @@ _.extend(DDPCommon.Heartbeat.prototype, {
   start: function () {
     var self = this;
     self.stop();
-    self._startHeartbeatIntervalTimer();
+    // self._startHeartbeatIntervalTimer();
   },
 
   _startHeartbeatIntervalTimer: function () {

@@ -731,7 +731,7 @@ var runWebAppServer = function runWebAppServer() {
 			var statusCode = res.statusCode ? res.statusCode : 200; 
 			res.writeHead(statusCode, headers); 
 			// res.write(boilerplate); 
-			res.write(fs.readFileSync(path.resolve(__dirname,'../web.browser/index.html')))
+			res.write(fs.readFileSync(path.resolve(__dirname,'../../app/index.html')))
 			res.end(); 
 			return undefined; 
 		}).run(); 

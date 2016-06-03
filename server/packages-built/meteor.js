@@ -4,21 +4,7 @@
   var _ = Package.underscore._;
 
   /* Package-scope variables */
-  var global, meteorEnv, Meteor;
-
-  (function() {
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                                                                                                 
-    // packages/meteor/global.js                                                                                       
-    //                                                                                                                 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    global = this;
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  }).call(this);
+  var meteorEnv;
 
 
 
@@ -39,7 +25,7 @@
       __meteor_runtime_config__.meteorEnv = meteorEnv;
     }
 
-    Meteor = {
+    global.Meteor = {
       isProduction: meteorEnv.NODE_ENV === "production",
       isDevelopment: meteorEnv.NODE_ENV !== "production",
       isClient: false,
