@@ -15,44 +15,12 @@ module.exports = function(options) {
 		contentBase
 	} = options
 
-	var entry = options.entry || [path.resolve(__dirname,'../../app/main_client')];
+	var entry = options.entry || [path.resolve(__dirname,'../../app/main_client')]
 
 	var babelQueryBase = {
-		presets: ["es2015-without-strict", "stage-1", "react"]//.map(_=>require(`babel-preset-${_}`)),
-		// plugins: ["transform-decorators-legacy"],
-		// cacheDirectory: true
-	};
-
-	// var config = {
-	// 	context: __dirname,
-	// 	entry: [],
-	// 	output: {
-	// 		path: path.join(__dirname, '../bundle'),
-	// 		publicPath: '/',
-	// 		pathinfo: true
-	// 	},
-	// 	resolve: {
-	// 		extensions: ['', '.js', '.jsx', '.json'],
-	// 		root: path.join(__dirname, '../app'),
-	// 		alias: {
-	// 			webworkify: 'webworkify-webpack'
-	// 		}
-	// 	},
-	// 	module: {
-	// 		loaders: [{
-	// 			test: /\.jsx?$/,
-	// 			loader: 'babel',
-	// 			exclude: /node_modules|lib/,
-	// 			query: babelQueryBase
-	// 		}]
-	// 	},
-	// 	plugins: [
-	// 		new ProgressBarPlugin()
-	// 	]
-	// };
-
-	// var clientBasePath = path.resolve(__dirname, '../web.browser/')
-	// var clinetBaseProgramJson = require(path.resolve(__dirname, '../web.browser/program.json'))
+		presets: ["es2015-without-strict", "stage-1", "react"]
+	}
+	
 	var config = {
 		entry: [path.resolve(__dirname,'../web.browser/index.js'), ...entry],
 		output: {
@@ -112,7 +80,8 @@ module.exports = function(options) {
 			new ProgressBarPlugin,
 			new webpack.DefinePlugin({
 				'Meteor.isClient': true,
-				'Meteor.isServer': false
+				'Meteor.isServer': false,
+				'Meteor._debug':'console.log'
 			}),
 			new webpack.PrefetchPlugin("react"),
 			new webpack.PrefetchPlugin("react/lib/ReactComponentBrowserEnvironment")

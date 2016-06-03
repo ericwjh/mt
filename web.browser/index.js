@@ -9,7 +9,8 @@ require('../packages/meteor/timers.js')
 require('../packages/meteor/errors.js')
 require('../packages/meteor/fiber_stubs_client.js')
 require('../packages/meteor/startup_client.js')
-require('../packages/meteor/debug.js')
+// require('../packages/meteor/debug.js')
+// Meteor._debug = console.log.bind(console)
 require('../packages/meteor/string_utils.js')
 require('../packages/meteor/test_environment.js')
 require('../packages/meteor/dynamics_browser.js')
@@ -43,7 +44,8 @@ require('../packages/base64/base64.js')
 require('../packages/ejson/ejson.js')
 
 // require('./packages-built/check.js')
-require('../packages/check/match')
+global.check = require('../packages/check/match').check
+global.Match = require('../packages/check/match').Match
 
 // require('./packages-built/retry.js')
 require('../packages/retry/retry.js')

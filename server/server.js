@@ -1,23 +1,23 @@
-/* Imports */
-var Meteor = Package.meteor.Meteor;
-var meteorEnv = Package.meteor.meteorEnv;
-// var ECMAScript = Package.ecmascript.ECMAScript;
-var Log = Package.logging.Log;
-var _ = Package.underscore._;
+// /* Imports */
+// var Meteor = Package.meteor.Meteor;
+// var meteorEnv = Package.meteor.meteorEnv;
+// // var ECMAScript = Package.ecmascript.ECMAScript;
+// var Log = Package.logging.Log;
+// var _ = Package.underscore._;
 var RoutePolicy = Package.routepolicy.RoutePolicy;
-// var Boilerplate = Package['boilerplate-generator'].Boilerplate;
-var WebAppHashing = Package['webapp-hashing'].WebAppHashing;
-var meteorInstall = Package.modules.meteorInstall;
-var Buffer = Package.modules.Buffer;
-// var process = Package.modules.process;
-// var Symbol = Package['ecmascript-runtime'].Symbol;
-// var Map = Package['ecmascript-runtime'].Map;
-// var Set = Package['ecmascript-runtime'].Set;
-var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
-// var Promise = Package.promise.Promise;
+// // var Boilerplate = Package['boilerplate-generator'].Boilerplate;
+// var WebAppHashing = Package['webapp-hashing'].WebAppHashing;
+// var meteorInstall = Package.modules.meteorInstall;
+// var Buffer = Package.modules.Buffer;
+// // var process = Package.modules.process;
+// // var Symbol = Package['ecmascript-runtime'].Symbol;
+// // var Map = Package['ecmascript-runtime'].Map;
+// // var Set = Package['ecmascript-runtime'].Set;
+// var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+// // var Promise = Package.promise.Promise;
 
-/* Package-scope variables */
-var WebApp, WebAppInternals, main;
+// /* Package-scope variables */
+// var WebApp, WebAppInternals, main;
 
 // var require = meteorInstall({"node_modules":{"meteor":{"webapp":{"webapp_server.js":["babel-runtime/helpers/typeof",function(require,exports,module){
 
@@ -54,8 +54,8 @@ var Fiber = require('fibers');
 var SHORT_SOCKET_TIMEOUT = 5 * 1000; 
 var LONG_SOCKET_TIMEOUT = 120 * 1000; 
 
-WebApp = {}; 
-WebAppInternals = {}; 
+global.WebApp = {}; 
+global.WebAppInternals = {}; 
 
 WebAppInternals.NpmModules = { 
 	connect: { 
@@ -831,7 +831,7 @@ WebAppInternals.additionalStaticJs = additionalStaticJs;
 // });
 module.exports = Package.webapp = {
 	WebApp: WebApp,
-	main: main,
+	// main: main,
 	WebAppInternals: WebAppInternals
 }
 

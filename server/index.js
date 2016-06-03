@@ -10,23 +10,7 @@ var Future = require("fibers/future")
 global.Npm = {
 	require: require
 }
-global.Assets = {
-	getText: function(assetPath, callback) {
-		return getAsset(assetPath, "utf8", callback);
-	},
-	getBinary: function(assetPath, callback) {
-		return getAsset(assetPath, undefined, callback);
-	},
-	absoluteFilePath: function(assetPath) {
-		if (!fileInfo.assets || !_.has(fileInfo.assets, assetPath)) {
-			throw new Error("Unknown asset: " + assetPath);
-		}
 
-		assetPath = files.convertToStandardPath(assetPath);
-		var filePath = path.join(serverDir, fileInfo.assets[assetPath]);
-		return files.convertToOSPath(filePath);
-	},
-}
 
 global.__meteor_bootstrap__ = {
 	startupHooks: [],
@@ -40,6 +24,7 @@ global.__meteor_bootstrap__ = {
 global.__meteor_runtime_config__ = {
 	// meteorRelease: configJson.meteorRelease
 };
+global._ = require('underscore')
 Fiber(function() {
 	require('./packages-built/underscore.js')
 		// require('./packages-built/underscore/pre.js')
@@ -253,6 +238,7 @@ Fiber(function() {
 		// require('./packages-built/binary-heap/min-max-heap.js')
 
 	require('./packages-built/mongo.js')
+	global.Mongo = Package.mongo.Mongo
 		// require('./packages-built/mongo/mongo_driver.js')
 		// require('./packages-built/mongo/oplog_tailing.js')
 		// require('./packages-built/mongo/observe_multiplex.js')
