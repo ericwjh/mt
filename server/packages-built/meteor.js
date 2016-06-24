@@ -1,7 +1,6 @@
 (function() {
 
   /* Imports */
-  var _ = Package.underscore._;
 
   /* Package-scope variables */
   var meteorEnv;

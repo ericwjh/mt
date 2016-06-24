@@ -3,8 +3,8 @@
   /* Imports */
   var Meteor = Package.meteor.Meteor;
   var meteorEnv = Package.meteor.meteorEnv;
-  var NpmModuleMongodb = Package['npm-mongo'].NpmModuleMongodb;
-  var NpmModuleMongodbVersion = Package['npm-mongo'].NpmModuleMongodbVersion;
+  // var NpmModuleMongodb = Package['npm-mongo'].NpmModuleMongodb;
+  // var NpmModuleMongodbVersion = Package['npm-mongo'].NpmModuleMongodbVersion;
   var AllowDeny = Package['allow-deny'].AllowDeny;
   var Random = Package.random.Random;
   var EJSON = Package.ejson.EJSON;
@@ -25,13 +25,13 @@
   var MinMaxHeap = Package['binary-heap'].MinMaxHeap;
   var Hook = Package['callback-hook'].Hook;
   var meteorInstall = Package.modules.meteorInstall;
-  var Buffer = Package.modules.Buffer;
-  var process = Package.modules.process;
-  var Symbol = Package['ecmascript-runtime'].Symbol;
-  var Map = Package['ecmascript-runtime'].Map;
-  var Set = Package['ecmascript-runtime'].Set;
-  var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
-  var Promise = Package.promise.Promise;
+  // var Buffer = Package.modules.Buffer;
+  // var process = Package.modules.process;
+  // var Symbol = Package['ecmascript-runtime'].Symbol;
+  // var Map = Package['ecmascript-runtime'].Map;
+  // var Set = Package['ecmascript-runtime'].Set;
+  // var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+  // var Promise = Package.promise.Promise;
 
   /* Package-scope variables */
   var MongoInternals, MongoTest, MongoConnection, CursorDescription, Cursor, listenAll, forEachTrigger, OPLOG_COLLECTION, idForOp, OplogHandle, ObserveMultiplexer, ObserveHandle, DocFetcher, PollingObserveDriver, OplogObserveDriver, LocalCollectionDriver, Mongo;

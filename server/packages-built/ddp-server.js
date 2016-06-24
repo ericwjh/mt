@@ -24,12 +24,12 @@ var LocalCollection = Package.minimongo.LocalCollection;
 var Minimongo = Package.minimongo.Minimongo;
 var meteorInstall = Package.modules.meteorInstall;
 var Buffer = Package.modules.Buffer;
-var process = Package.modules.process;
-var Symbol = Package['ecmascript-runtime'].Symbol;
-var Map = Package['ecmascript-runtime'].Map;
-var Set = Package['ecmascript-runtime'].Set;
-var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
-var Promise = Package.promise.Promise;
+// var process = Package.modules.process;
+// var Symbol = Package['ecmascript-runtime'].Symbol;
+// var Map = Package['ecmascript-runtime'].Map;
+// var Set = Package['ecmascript-runtime'].Set;
+// var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+// var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
 var StreamServer, DDPServer, Server;

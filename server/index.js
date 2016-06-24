@@ -1,32 +1,21 @@
-process.env.MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost/test'
-process.env.PORT = process.env.PORT || 3000
-process.env.ROOT_URL = process.env.ROOT_URL || 'http://localhost:' + process.env.PORT
-
 var Fiber = require("fibers")
-var fs = require("fs")
-var path = require("path")
-var Future = require("fibers/future")
-
-global.Npm = {
-	require: require
-}
-
+global.Npm = {require: require}
 
 global.__meteor_bootstrap__ = {
-	startupHooks: [],
-	serverDir: __dirname,
-	// configJson: configJson
-	configJson: {
-		clientPaths: []
-	}
-};
+	// startupHooks: [],
+	// serverDir: __dirname,
+	// configJson: {
+	// 	clientPaths: []
+	// }
+}
 
-global.__meteor_runtime_config__ = {
-	// meteorRelease: configJson.meteorRelease
-};
-global._ = require('underscore')
+global.__meteor_runtime_config__ = {}
+
 Fiber(function() {
-	require('./packages-built/underscore.js')
+	// require('./packages-built/underscore.js')
+	global.Package = {}
+	global._ = require('underscore')
+	Package.underscore = {_:global._}
 		// require('./packages-built/underscore/pre.js')
 		// require('./packages-built/underscore/underscore.js')
 		// require('./packages-built/underscore/post.js')
@@ -48,9 +37,9 @@ Fiber(function() {
 		// require('./packages-built/meteor/url_common.js')
 		// require('./packages-built/meteor/flush-buffers-on-exit-in-windows.js')
 
-	require('./packages-built/accounts-ui.js')
+	// require('./packages-built/accounts-ui.js')
 
-	require('./packages-built/npm-bcrypt.js')
+	// require('./packages-built/npm-bcrypt.js')
 		// require('./packages-built/npm-bcrypt/wrapper.js')
 
 	require('./packages-built/modules-runtime.js')
@@ -65,10 +54,10 @@ Fiber(function() {
 	require('./packages-built/promise.js')
 		// require('./packages-built/promise/server.js')
 
-	require('./packages-built/ecmascript-runtime.js')
+	// require('./packages-built/ecmascript-runtime.js')
 		// require('./packages-built/ecmascript-runtime/runtime.js')
 
-	require('./packages-built/babel-runtime.js')
+	// require('./packages-built/babel-runtime.js')
 		// require('./packages-built/babel-runtime/babel-runtime.js')
 
 	require('./packages-built/random.js')
@@ -78,7 +67,7 @@ Fiber(function() {
 	require('./packages-built/rate-limit.js')
 		// require('./packages-built/rate-limit/rate-limit.js')
 
-	require('./packages-built/ddp-rate-limiter.js')
+	// require('./packages-built/ddp-rate-limiter.js')
 		// require('./packages-built/ddp-rate-limiter/ddp-rate-limiter.js')
 
 	require('./packages-built/base64.js')
@@ -127,7 +116,7 @@ Fiber(function() {
 		// require('./packages-built/ddp-client/random_stream.js')
 		// require('./packages-built/ddp-client/livedata_connection.js')
 
-	require('./packages-built/logging.js')
+	// require('./packages-built/logging.js')
 		// require('./packages-built/logging/logging.js')
 		// require('./packages-built/logging/logging.js')
 		// require('./packages-built/logging/logging.js')
@@ -135,7 +124,7 @@ Fiber(function() {
 	require('./packages-built/routepolicy.js')
 		// require('./packages-built/routepolicy/routepolicy.js')
 
-	require('./packages-built/deps.js')
+	// require('./packages-built/deps.js')
 
 	// require('./packages-built/htmljs.js')
 	// require('./packages-built/htmljs/preamble.js')
@@ -167,7 +156,7 @@ Fiber(function() {
 	require('./packages-built/observe-sequence.js')
 		// require('./packages-built/observe-sequence/observe_sequence.js')
 
-	require('./packages-built/reactive-var.js')
+	// require('./packages-built/reactive-var.js')
 		// require('./packages-built/reactive-var/reactive-var.js')
 
 	// require('./packages-built/blaze.js')
@@ -187,12 +176,12 @@ Fiber(function() {
 	// require('./packages-built/boilerplate-generator.js')
 	// require('./packages-built/boilerplate-generator/boilerplate-generator.js')
 
-	require('./packages-built/webapp-hashing.js')
+	// require('./packages-built/webapp-hashing.js')
 		// require('./packages-built/webapp-hashing/webapp-hashing.js')
 
 	// require('./packages-built/webapp.js')
 	// require('./packages-built/webapp/webapp_server.js')
-	require('./server.js')
+	require('./webapp.js')
 
 	require('./packages-built/ordered-dict.js')
 		// require('./packages-built/ordered-dict/ordered_dict.js')
@@ -218,17 +207,19 @@ Fiber(function() {
 		// require('./packages-built/minimongo/sorter_projection.js')
 
 	require('./packages-built/ddp-server.js')
-		// require('./packages-built/ddp-server/stream_server.js')
-		// require('./packages-built/ddp-server/livedata_server.js')
-		// require('./packages-built/ddp-server/writefence.js')
-		// require('./packages-built/ddp-server/crossbar.js')
-		// require('./packages-built/ddp-server/server_convenience.js')
+		// require('../packages/ddp-server/stream_server.js')
+		// require('../packages/ddp-server/livedata_server.js')
+		// require('../packages/ddp-server/writefence.js')
+		// require('../packages/ddp-server/crossbar.js')
+		// require('../packages/ddp-server/server_convenience.js')
 
 	// require('./packages-built/ddp.js')
 
-	require('./packages-built/npm-mongo.js')
+	// require('./packages-built/npm-mongo.js')
 		// require('./packages-built/npm-mongo/wrapper.js')
-
+	global.NpmModuleMongodb = require('mongodb');
+	global.NpmModuleMongodbVersion = require('mongodb/package.json').version
+	
 	require('./packages-built/allow-deny.js')
 		// require('./packages-built/allow-deny/allow-deny.js')
 
@@ -249,17 +240,17 @@ Fiber(function() {
 		// require('./packages-built/mongo/remote_collection_driver.js')
 		// require('./packages-built/mongo/collection.js')
 
-	require('./packages-built/accounts-base.js')
+	// require('./packages-built/accounts-base.js')
 		// require('./packages-built/accounts-base/server_main.js')
 		// require('./packages-built/accounts-base/accounts_common.js')
 		// require('./packages-built/accounts-base/accounts_rate_limit.js')
 		// require('./packages-built/accounts-base/accounts_server.js')
 		// require('./packages-built/accounts-base/url_server.js')
 
-	require('./packages-built/sha.js')
+	// require('./packages-built/sha.js')
 		// require('./packages-built/sha/sha256.js')
 
-	require('./packages-built/srp.js')
+	// require('./packages-built/srp.js')
 		// require('./packages-built/srp/biginteger.js')
 		// require('./packages-built/srp/srp.js')
 
@@ -281,13 +272,13 @@ Fiber(function() {
 
 	// require('./packages-built/blaze-html-templates.js')
 
-	require('./packages-built/session.js')
+	// require('./packages-built/session.js')
 
 	// require('./packages-built/reload.js')
 
 	// require('./packages-built/mindfront_why-reminify.js')
 
-	require('./packages-built/livedata.js')
+	// require('./packages-built/livedata.js')
 
 	// require('./packages-built/hot-code-push.js')
 
@@ -300,26 +291,16 @@ Fiber(function() {
 
 	// require('./packages-built/global-imports.js')
 
-	require('../../app/main_server.js')
+	// require('../../main_server.js')
 
-	require('./packages-built/service-configuration')
+	// require('./packages-built/service-configuration')
 
-	// only start listening after all the startup code has run.                                                      //
-	var localPort = process.env.PORT || 3000
-	var localIp = '0.0.0.0'; // 788
-	Package.webapp.WebApp.httpServer.listen(localPort, localIp, Package.meteor.Meteor.bindEnvironment(function() { // 789
-		if (process.env.METEOR_PRINT_ON_LISTEN) console.log("LISTENING"); // must match run-app.js                     // 790
-		//
-		// var callbacks = onListeningCallbacks; // 789
-		// onListeningCallbacks = null; // 794
-		// _.each(callbacks, function(x) { // 795
-		// 	x(); // 795
-		// }); //
-	}, function(e) { //
-		console.error("Error listening:", e); // 798
-		console.error(e && e.stack); // 799
-	})); //
-	//
-// new Package.mongo.Mongo.Collection('abc')
+	Package.webapp.WebApp.httpServer.listen(process.env.PORT, '0.0.0.0',function(){
+		console.log('listen on', process.env.PORT)
+	})
 
 }).run();
+
+process.on('SIGINT', function(){
+	process.exit()
+})

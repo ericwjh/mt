@@ -19,6 +19,7 @@ global.__meteor_bootstrap__ = {
 
 global.__meteor_runtime_config__ = {};
 global._ = require('underscore')
+global.Package = {underscore:{_:_}}
 
 Fiber(function() {
 	// require('./packages-built/underscore.js')
@@ -34,7 +35,7 @@ Fiber(function() {
 		Meteor._setImmediate = process.nextTick
 		require('../packages/meteor/timers.js')
 		require('../packages/meteor/errors.js')
-		require('../packages/meteor/fiber_helpers.js')
+		// require('../packages/meteor/fiber_helpers.js')
 		require('../packages/meteor/startup_server.js')
 		require('../packages/meteor/debug.js')
 		require('../packages/meteor/string_utils.js')
@@ -69,9 +70,10 @@ Fiber(function() {
 		// require('../packages/babel-runtime/babel-runtime.js')
 
 	// require('./packages-built/random.js')
-		require('../packages/random/random.js')
-		require('../packages/random/deprecated.js')
-
+		// require('../packages/random/random.js')
+		// require('../packages/random/deprecated.js')
+		require('./random/random.js')
+		require('./random/deprecated.js')
 	// require('./packages-built/rate-limit.js')
 		require('../packages/rate-limit/rate-limit.js')
 
@@ -128,8 +130,8 @@ Fiber(function() {
 		require('../packages/logging/logging.js')
 
 	// require('./packages-built/routepolicy.js')
-		global.Package = {}
-		require('../packages/routepolicy/routepolicy.js')
+		// require('../packages/routepolicy/routepolicy.js')
+		require('./routepolicy.js')
 
 	// require('./packages-built/deps.js')
 
@@ -191,7 +193,7 @@ Fiber(function() {
 
 	// require('../packages/webapp.js')
 	// require('../packages/webapp/webapp_server.js')
-	require('./server.js')
+	require('./webapp.js')
 
 	// require('./packages-built/ordered-dict.js')
 		require('../packages/ordered-dict/ordered_dict.js')
@@ -307,7 +309,7 @@ Fiber(function() {
 
 	// require('../packages/global-imports.js')
 
-	require('../../app/main_server.js')
+	// require('../../app/main_server.js')
 
 	// require('./packages-built/service-configuration')
 	require('../packages/service-configuration/service_configuration_common.js')

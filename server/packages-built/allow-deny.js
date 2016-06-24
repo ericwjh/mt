@@ -14,13 +14,13 @@ var EJSON = Package.ejson.EJSON;
 var DDP = Package['ddp-client'].DDP;
 var DDPServer = Package['ddp-server'].DDPServer;
 var meteorInstall = Package.modules.meteorInstall;
-var Buffer = Package.modules.Buffer;
-var process = Package.modules.process;
-var Symbol = Package['ecmascript-runtime'].Symbol;
-var Map = Package['ecmascript-runtime'].Map;
-var Set = Package['ecmascript-runtime'].Set;
-var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
-var Promise = Package.promise.Promise;
+// var Buffer = Package.modules.Buffer;
+// var process = Package.modules.process;
+// var Symbol = Package['ecmascript-runtime'].Symbol;
+// var Map = Package['ecmascript-runtime'].Map;
+// var Set = Package['ecmascript-runtime'].Set;
+// var meteorBabelHelpers = Package['babel-runtime'].meteorBabelHelpers;
+// var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
 var AllowDeny;
