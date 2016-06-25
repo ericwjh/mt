@@ -740,7 +740,7 @@ _.extend(Session.prototype, {
   },                                                                                                                  
                                                                                                                       
   protocol_handlers: {                                                                                                
-    sub: function sub(msg) {                                                                                          
+    sub: function sub(msg) {
       var self = this;                                                                                                
                                                                                                                       
       // reject malformed messages                                                                                    
@@ -789,6 +789,7 @@ _.extend(Session.prototype, {
       }                                                                                                               
                                                                                                                       
       var handler = self.server.publish_handlers[msg.name];                                                           
+      console.log('sub,handler',msg,handler)                                                                                          
                                                                                                                       
       self._startSubscription(handler, msg.id, msg.params, msg.name);                                                 
     },                                                                                                                
