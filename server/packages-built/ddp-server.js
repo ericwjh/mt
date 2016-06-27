@@ -1,11 +1,11 @@
 (function () {
 
 /* Imports */
-var Meteor = Package.meteor.Meteor;
-var global = Package.meteor.global;
-var meteorEnv = Package.meteor.meteorEnv;
-var check = Package.check.check;
-var Match = Package.check.Match;
+// var Meteor = Package.meteor.Meteor;
+// var global = Package.meteor.global;
+// var meteorEnv = Package.meteor.meteorEnv;
+// var check = Package.check.check;
+// var Match = Package.check.Match;
 var Random = Package.random.Random;
 var EJSON = Package.ejson.EJSON;
 var _ = Package.underscore._;
@@ -789,7 +789,6 @@ _.extend(Session.prototype, {
       }                                                                                                               
                                                                                                                       
       var handler = self.server.publish_handlers[msg.name];                                                           
-      console.log('sub,handler',msg,handler)                                                                                          
                                                                                                                       
       self._startSubscription(handler, msg.id, msg.params, msg.name);                                                 
     },                                                                                                                

@@ -1,9 +1,9 @@
 (function () {
 Package.insecure = {};
 /* Imports */
-var Meteor = Package.meteor.Meteor;
-var global = Package.meteor.global;
-var meteorEnv = Package.meteor.meteorEnv;
+// var Meteor = Package.meteor.Meteor;
+// var global = Package.meteor.global;
+// var meteorEnv = Package.meteor.meteorEnv;
 // var ECMAScript = Package.ecmascript.ECMAScript;
 var _ = Package.underscore._;
 var LocalCollection = Package.minimongo.LocalCollection;
@@ -200,7 +200,7 @@ CollectionPrototype._defineMutationMethods = function () {
             } else {                                                                                              
               // In secure mode, if we haven't called allow or deny, then nothing                                 
               // is permitted.                                                                                    
-              throw new Meteor.Error(403, "Access denied");                                                       
+              throw new Meteor.Error(403, "Access denied1");                                                       
             }                                                                                                     
           } catch (e) {                                                                                           
             if (e.name === 'MongoError' || e.name === 'MinimongoError') {                                         
@@ -248,13 +248,13 @@ CollectionPrototype._validatedInsert = function (userId, doc, generatedId) {
   if (_.any(self._validators.insert.deny, function (validator) {                                                  
     return validator(userId, docToValidate(validator, doc, generatedId));                                         
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied2");                                                                 
   }                                                                                                               
   // Any allow returns true means proceed. Throw error if they all fail.                                          
   if (_.all(self._validators.insert.allow, function (validator) {                                                 
     return !validator(userId, docToValidate(validator, doc, generatedId));                                        
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied3");                                                                 
   }                                                                                                               
                                                                                                                   
   // If we generated an ID above, insert it now: after the validation, but                                        
@@ -323,14 +323,14 @@ CollectionPrototype._validatedUpdate = function (userId, selector, mutator, opti
     var factoriedDoc = transformDoc(validator, doc);                                                              
     return validator(userId, factoriedDoc, fields, mutator);                                                      
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied4");                                                                 
   }                                                                                                               
   // Any allow returns true means proceed. Throw error if they all fail.                                          
   if (_.all(self._validators.update.allow, function (validator) {                                                 
     var factoriedDoc = transformDoc(validator, doc);                                                              
     return !validator(userId, factoriedDoc, fields, mutator);                                                     
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied5");                                                                 
   }                                                                                                               
                                                                                                                   
   options._forbidReplace = true;                                                                                  
@@ -375,13 +375,13 @@ CollectionPrototype._validatedRemove = function (userId, selector) {
   if (_.any(self._validators.remove.deny, function (validator) {                                                  
     return validator(userId, transformDoc(validator, doc));                                                       
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied6");                                                                 
   }                                                                                                               
   // Any allow returns true means proceed. Throw error if they all fail.                                          
   if (_.all(self._validators.remove.allow, function (validator) {                                                 
     return !validator(userId, transformDoc(validator, doc));                                                      
   })) {                                                                                                           
-    throw new Meteor.Error(403, "Access denied");                                                                 
+    throw new Meteor.Error(403, "Access denied7");                                                                 
   }                                                                                                               
                                                                                                                   
   // Back when we supported arbitrary client-provided selectors, we actually                                      

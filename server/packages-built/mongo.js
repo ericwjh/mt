@@ -5,7 +5,7 @@
   var meteorEnv = Package.meteor.meteorEnv;
   // var NpmModuleMongodb = Package['npm-mongo'].NpmModuleMongodb;
   // var NpmModuleMongodbVersion = Package['npm-mongo'].NpmModuleMongodbVersion;
-  var AllowDeny = Package['allow-deny'].AllowDeny;
+  
   var Random = Package.random.Random;
   var EJSON = Package.ejson.EJSON;
   var _ = Package.underscore._;
@@ -17,8 +17,8 @@
   var Deps = Package.tracker.Deps;
   var DiffSequence = Package['diff-sequence'].DiffSequence;
   var MongoID = Package['mongo-id'].MongoID;
-  var check = Package.check.check;
-  var Match = Package.check.Match;
+  // var check = Package.check.check;
+  // var Match = Package.check.Match;
   // var ECMAScript = Package.ecmascript.ECMAScript;
   var MaxHeap = Package['binary-heap'].MaxHeap;
   var MinHeap = Package['binary-heap'].MinHeap;

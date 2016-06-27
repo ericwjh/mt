@@ -53,8 +53,8 @@ require('../packages/base64/base64.js')
 require('../packages/ejson/ejson.js')
 
 // require('./packages-built/check.js')
-// global.check = require('../packages/check/match').check
-// global.Match = require('../packages/check/match').Match
+global.check = require('../packages/check/match').check
+global.Match = require('../packages/check/match').Match
 
 // require('./packages-built/retry.js')
 require('../packages/retry/retry.js')
@@ -66,7 +66,7 @@ require('../packages/id-map/id-map.js')
 require('../packages/ddp-common/namespace.js')
 // require('../packages/ddp-common/heartbeat.js')
 require('../packages/ddp-common/utils.js')
-// require('../packages/ddp-common/method_invocation.js')
+require('../packages/ddp-common/method_invocation.js')
 require('../packages/ddp-common/random_stream.js')
 
 // require('./packages-built/diff-sequence.js')
@@ -114,7 +114,8 @@ require('../packages/minimongo/id_map.js')
 require('../packages/minimongo/observe.js')
 require('../packages/minimongo/objectid.js')
 
-require('../packages/allow-deny/allow-deny.js')
+// require('../packages/allow-deny/allow-deny.js')
+require('./allow-deny.js')
 
 require('../packages/mongo/local_collection_driver.js')
 require('../packages/mongo/collection.js')
