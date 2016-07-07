@@ -232,14 +232,14 @@ Fiber(function() {
 		// require('../packages/binary-heap/min-heap.js')
 		// require('../packages/binary-heap/min-max-heap.js')
 
-	// require('../packages-built/mongo.js')
+	// require('./packages-built/mongo.js')
 		require('../packages/mongo/mongo_driver.js')
 		require('../packages/mongo/oplog_tailing.js')
 		require('../packages/mongo/observe_multiplex.js')
 		require('../packages/mongo/doc_fetcher.js')
 		require('../packages/mongo/polling_observe_driver.js')
 		require('../packages/mongo/oplog_observe_driver.js')
-		// require('../packages/mongo/local_collection_driver.js')
+		require('../packages/mongo/local_collection_driver.js')
 		// global.LocalCollectionDriver = LocalCollectionDriver
 		// console.log(LocalCollectionDriver)
 		require('../packages/mongo/remote_collection_driver.js')

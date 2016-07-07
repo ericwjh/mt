@@ -235,7 +235,7 @@
               
               var connectFuture = new Future(); 
               MongoDB.connect(url, mongoOptions, Meteor.bindEnvironment(function(err, db) { 
-                console.log(err)
+                // console.log(err)
                   if (err) { 
                     throw err; 
                   } 
