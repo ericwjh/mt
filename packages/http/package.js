@@ -1,0 +1,39 @@
+Package.describe({
+  summary: "Make HTTP calls to remote servers",
+  version: '1.1.7'
+});
+
+Npm.depends({
+  request: "2.72.0"
+});
+
+Package.onUse(function (api) {
+  api.use([
+    'underscore',
+    'url',
+    'ecmascript'
+  ]);
+
+  api.export('HTTP');
+  api.export('HTTPInternals', 'server');
+  api.addFiles('httpcall_common.js', ['client', 'server']);
+  api.addFiles('httpcall_client.js', 'client');
+  api.addFiles('httpcall_server.js', 'server');
+  api.addFiles('deprecated.js', ['client', 'server']);
+});
+
+Package.onTest(function (api) {
+  api.use('ecmascript');
+  api.use('webapp', 'server');
+  api.use('underscore');
+  api.use('random');
+  api.use('jquery', 'client');
+  api.use('http', ['client', 'server']);
+  api.use('tinytest');
+  api.use('test-helpers', ['client', 'server']);
+
+  api.addFiles('test_responder.js', 'server');
+  api.addFiles('httpcall_tests.js', ['client', 'server']);
+
+  api.addAssets('test_static.serveme', 'client');
+});
