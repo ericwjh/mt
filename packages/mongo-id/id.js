@@ -1,4 +1,4 @@
-MongoID = {};
+global.MongoID = {};
 
 MongoID._looksLikeObjectID = function (str) {
   return str.length === 24 && str.match(/^[0-9a-f]*$/);

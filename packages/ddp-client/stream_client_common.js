@@ -69,11 +69,11 @@ var translateUrl =  function(url, newSchemeBase, subPath) {
     return url + "/" + subPath;
 };
 
-toSockjsUrl = function (url) {
+global.toSockjsUrl = function (url) {
   return translateUrl(url, "http", "sockjs");
 };
 
-toWebsocketUrl = function (url) {
+global.toWebsocketUrl = function (url) {
   var ret = translateUrl(url, "ws", "websocket");
   return ret;
 };

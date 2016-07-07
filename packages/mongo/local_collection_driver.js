@@ -1,4 +1,4 @@
-LocalCollectionDriver = function () {
+global.LocalCollectionDriver = function () {
   var self = this;
   self.noConnCollections = {};
 };

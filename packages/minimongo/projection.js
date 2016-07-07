@@ -52,7 +52,7 @@ LocalCollection._compileProjection = function (fields) {
 //  - tree - Object - tree representation of keys involved in projection
 //  (exception for '_id' as it is a special case handled separately)
 //  - including - Boolean - "take only certain fields" type of projection
-projectionDetails = function (fields) {
+global.projectionDetails = function (fields) {
   // Find the non-_id keys (_id is handled specially because it is included unless
   // explicitly excluded). Sort the keys, so that our code to detect overlaps
   // like 'foo' and 'foo.bar' can assume that 'foo' comes first.
@@ -124,7 +124,7 @@ projectionDetails = function (fields) {
 //                        conflict resolution.
 // initial tree - Optional Object: starting tree.
 // @returns - Object: tree represented as a set of nested objects
-pathsToTree = function (paths, newLeafFn, conflictFn, tree) {
+global.pathsToTree = function (paths, newLeafFn, conflictFn, tree) {
   tree = tree || {};
   _.each(paths, function (keyPath) {
     var treePos = tree;

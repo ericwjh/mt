@@ -8,7 +8,7 @@
 //  minTimeout: time to wait for the first `minCount` retries (ms).
 //  fuzz: factor to randomize retry times by (to avoid retry storms).
 
-Retry = function (options) {
+global.Retry = function (options) {
   var self = this;
   _.extend(self, _.defaults(_.clone(options || {}), {
     baseTimeout: 1000, // 1 second

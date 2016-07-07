@@ -1756,7 +1756,7 @@ DDP.connect = function (url, options) {
 // Hack for `spiderable` package: a way to see if the page is done
 // loading all the data it needs.
 //
-allConnections = [];
+global.allConnections = [];
 DDP._allSubscriptionsReady = function () {
   return _.all(allConnections, function (conn) {
     return _.all(conn._subscriptions, function (sub) {

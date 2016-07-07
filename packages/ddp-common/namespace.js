@@ -6,4 +6,4 @@
  * implementation of the livedata server and stream server. Common 
  * functionality shared between both can be shared under this namespace
  */
-DDPCommon = {};
+global.DDPCommon = {};

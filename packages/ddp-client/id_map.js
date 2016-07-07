@@ -1,4 +1,4 @@
-MongoIDMap = function () {
+global.MongoIDMap = function () {
   var self = this;
   IdMap.call(self, MongoID.idStringify, MongoID.idParse);
 };

@@ -7,7 +7,7 @@
 
 // ObserveHandle: the return value of a live query.
 
-LocalCollection = function (name) {
+global.LocalCollection = function (name) {
   var self = this;
   self.name = name;
   // _id -> document (also containing id)
@@ -34,13 +34,13 @@ LocalCollection = function (name) {
   self.paused = false;
 };
 
-Minimongo = {};
+global.Minimongo = {};
 
 // Object exported only for unit testing.
 // Use it to export private functions to test in Tinytest.
-MinimongoTest = {};
+global.MinimongoTest = {};
 
-MinimongoError = function (message) {
+global.MinimongoError = function (message) {
   var e = new Error(message);
   e.name = "MinimongoError";
   return e;

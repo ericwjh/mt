@@ -2,8 +2,8 @@
  * @namespace
  * @summary Namespace for EJSON functions
  */
-EJSON = {};
-EJSONTest = {};
+global.EJSON = {};
+global.EJSONTest = {};
 
 
 

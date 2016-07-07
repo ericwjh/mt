@@ -8,7 +8,7 @@ for (var i = 0; i < BASE_64_CHARS.length; i++) {
   BASE_64_VALS[BASE_64_CHARS.charAt(i)] = i;
 };
 
-Base64 = {};
+global.Base64 = {};
 
 Base64.encode = function (array) {
 

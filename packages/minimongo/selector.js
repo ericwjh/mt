@@ -204,7 +204,7 @@ var convertElementMatcherToBranchedMatcher = function (
 };
 
 // Takes a RegExp object and returns an element matcher.
-regexpElementMatcher = function (regexp) {
+global.regexpElementMatcher = function (regexp) {
   return function (value) {
     if (value instanceof RegExp) {
       // Comparing two regexps means seeing if the regexps are identical
@@ -228,7 +228,7 @@ regexpElementMatcher = function (regexp) {
 
 // Takes something that is not an operator object and returns an element matcher
 // for equality with that thing.
-equalityElementMatcher = function (elementSelector) {
+global.equalityElementMatcher = function (elementSelector) {
   if (isOperatorObject(elementSelector))
     throw Error("Can't create equalityValueSelector for operator object");
 
@@ -563,7 +563,7 @@ var makeInequality = function (cmpValueComparator) {
 //    being called
 //  - dontIncludeLeafArrays, a bool which causes an argument to be passed to
 //    expandArraysInBranches if it is called
-ELEMENT_OPERATORS = {
+global.ELEMENT_OPERATORS = {
   $lt: makeInequality(function (cmpValue) {
     return cmpValue < 0;
   }),
@@ -776,7 +776,7 @@ ELEMENT_OPERATORS = {
 //
 // See the test 'minimongo - lookup' for some examples of what lookup functions
 // return.
-makeLookupFunction = function (key, options) {
+global.makeLookupFunction = function (key, options) {
   options = options || {};
   var parts = key.split('.');
   var firstPart = parts.length ? parts[0] : '';
@@ -889,7 +889,7 @@ makeLookupFunction = function (key, options) {
 };
 MinimongoTest.makeLookupFunction = makeLookupFunction;
 
-expandArraysInBranches = function (branches, skipTheArrays) {
+global.expandArraysInBranches = function (branches, skipTheArrays) {
   var branchesOut = [];
   _.each(branches, function (branch) {
     var thisIsArray = isArray(branch.value);

@@ -12,7 +12,7 @@ var warn = function () {
 var idStringify = MongoID.idStringify;
 var idParse = MongoID.idParse;
 
-ObserveSequence = {
+global.ObserveSequence = {
   _suppressWarnings: 0,
   _loggedWarnings: 0,
 
@@ -276,11 +276,11 @@ var diffArray = function (lastSeqArray, seqArray, callbacks) {
   });
 };
 
-seqChangedToEmpty = function (lastSeqArray, callbacks) {
+global.seqChangedToEmpty = function (lastSeqArray, callbacks) {
   return [];
 };
 
-seqChangedToArray = function (lastSeqArray, array, callbacks) {
+global.seqChangedToArray = function (lastSeqArray, array, callbacks) {
   var idsUsed = {};
   var seqArray = _.map(array, function (item, index) {
     var id;
@@ -313,7 +313,7 @@ seqChangedToArray = function (lastSeqArray, array, callbacks) {
   return seqArray;
 };
 
-seqChangedToCursor = function (lastSeqArray, cursor, callbacks) {
+global.seqChangedToCursor = function (lastSeqArray, cursor, callbacks) {
   var initial = true; // are we observing initial data from cursor?
   var seqArray = [];
 

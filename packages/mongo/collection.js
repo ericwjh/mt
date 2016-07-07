@@ -5,7 +5,7 @@
  * @summary Namespace for MongoDB-related items
  * @namespace
  */
-Mongo = {};
+global.Mongo = {};
 
 /**
  * @summary varructor for a Collection
