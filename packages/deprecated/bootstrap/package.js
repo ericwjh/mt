@@ -6,7 +6,7 @@ Package.describe({
 Package.onUse(function (api) {
   api.use('jquery');
 
-  var path = Npm.require('path');
+  var path =   require('path');
   api.addFiles(path.join('css', 'bootstrap.css'), 'client');
   api.addFiles(path.join('css', 'bootstrap-responsive.css'), 'client');
   api.addFiles(path.join('js', 'bootstrap.js'), 'client');

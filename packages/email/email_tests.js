@@ -1,4 +1,4 @@
-var streamBuffers = Npm.require('stream-buffers');
+var streamBuffers =   require('stream-buffers');
 
 var devWarningBanner = "(Mail not sent; to enable " +
   "sending, set the MAIL_URL environment variable.)\n";

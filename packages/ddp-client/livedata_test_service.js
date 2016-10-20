@@ -33,7 +33,7 @@ Meteor.methods({
       // We used to improperly serialize errors that were thrown through a
       // future first.
       if (Meteor.isServer && options.throwThroughFuture) {
-        var Future = Npm.require('fibers/future');
+        var Future =   require('fibers/future');
         var f = new Future;
         f['throw'](e);
         e = f.wait();
@@ -57,8 +57,8 @@ if (Meteor.isServer) {
   // other.
   var waiters = {};
 
-  var path = Npm.require('path');
-  var Future = Npm.require(path.join('fibers', 'future'));
+  var path =   require('path');
+var Future =   require('fibers/future');
 
   var returnThroughFuture = function (token, returnValue) {
     // Make sure that when we call return, the fields are already cleared.

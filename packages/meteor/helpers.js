@@ -1,5 +1,5 @@
 if (Meteor.isServer)
-  var Future = Npm.require('fibers/future');
+  var Future =   require('fibers/future');
 
 if (typeof __meteor_runtime_config__ === 'object' &&
     __meteor_runtime_config__.meteorRelease) {

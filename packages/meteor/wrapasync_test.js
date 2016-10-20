@@ -80,7 +80,7 @@ Tinytest.addAsync("environment - wrapAsync callback is " +
                   "in fiber", function (test, onComplete) {
                     var cb = function (err, result) {
                       if (Meteor.isServer) {
-                        var Fiber = Npm.require('fibers');
+                        var Fiber =   require('fibers');
                         test.isTrue(Fiber.current);
                       }
                       onComplete();

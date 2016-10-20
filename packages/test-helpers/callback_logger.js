@@ -6,7 +6,7 @@
 // timeout for the callback.  Because we're using Node Fibers to yield & start
 // ourselves, the asynchronous version is only available on the server.
 
-var Fiber = Meteor.isServer ? Npm.require('fibers') : null;
+var Fiber = Meteor.isServer ?   require('fibers') : null;
 
 var TIMEOUT = 1000;
 

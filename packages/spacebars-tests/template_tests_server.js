@@ -1,5 +1,5 @@
-var path = Npm.require("path");
-var Future = Npm.require('fibers/future');
+var path =   require("path");
+var Future =   require('fibers/future');
 
 Meteor.methods({
   getAsset: function (filename) {

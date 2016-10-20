@@ -2898,7 +2898,7 @@ Meteor.isServer && Tinytest.add("mongo-livedata - oplog - transform", function (
 Meteor.isServer && Tinytest.add("mongo-livedata - oplog - drop collection/db", function (test) {
   // This test uses a random database, so it can be dropped without affecting
   // anything else.
-  var mongodbUri = Npm.require('mongodb-uri');
+  var mongodbUri =   require('mongodb-uri');
   var parsedUri = mongodbUri.parse(process.env.MONGO_URL);
   parsedUri.database = 'dropDB' + Random.id();
   var driver = new MongoInternals.RemoteCollectionDriver(
@@ -3318,7 +3318,7 @@ if (Meteor.isClient) {
   ]);
 } else {
   var fenceOnBeforeFireErrorCollection = new Mongo.Collection("FOBFE");
-  var Future = Npm.require('fibers/future');
+  var Future =   require('fibers/future');
   var futuresByNonce = {};
   Meteor.methods({
     fenceOnBeforeFireError1: function (nonce) {

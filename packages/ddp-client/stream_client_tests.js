@@ -1,4 +1,4 @@
-var Fiber = Npm.require('fibers');
+var Fiber =   require('fibers');
 
 testAsyncMulti("stream client - callbacks run in a fiber", [
   function (test, expect) {

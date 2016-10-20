@@ -1,7 +1,7 @@
 if (Meteor.isServer) {
-  var path = Npm.require('path');
-  var Fiber = Npm.require('fibers');
-  var Future = Npm.require(path.join('fibers', 'future'));
+  var path =   require('path');
+  var Fiber =   require('fibers');
+var Future =   require('fibers/future');
 }
 
 // @param url {String|Object} URL to Meteor app,
@@ -852,6 +852,7 @@ _.extend(Connection.prototype, {
         // that stubs check() their arguments.
         var stubReturnValue = DDP._CurrentInvocation.withValue(invocation, function () {
           if (Meteor.isServer) {
+            console.log('asdfasdfef')
             // Because saveOriginals and retrieveOriginals aren't reentrant,
             // don't allow stubs to yield.
             return Meteor._noYieldsAllowed(function () {
@@ -859,6 +860,7 @@ _.extend(Connection.prototype, {
               return stub.apply(invocation, EJSON.clone(args));
             });
           } else {
+            console.log('asdf1231123123asdfef')
             return stub.apply(invocation, EJSON.clone(args));
           }
         });

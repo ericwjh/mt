@@ -1,6 +1,6 @@
-var Future = Npm.require('fibers/future');
+var Future =   require('fibers/future');
 
-OPLOG_COLLECTION = 'oplog.rs';
+global.OPLOG_COLLECTION = 'oplog.rs';
 
 var TOO_FAR_BEHIND = process.env.METEOR_OPLOG_TOO_FAR_BEHIND || 2000;
 
@@ -8,7 +8,7 @@ var showTS = function (ts) {
   return "Timestamp(" + ts.getHighBits() + ", " + ts.getLowBits() + ")";
 };
 
-idForOp = function (op) {
+global.idForOp = function (op) {
   if (op.op === 'd')
     return op.o._id;
   else if (op.op === 'i')
@@ -22,7 +22,7 @@ idForOp = function (op) {
     throw Error("Unknown op: " + EJSON.stringify(op));
 };
 
-OplogHandle = function (oplogUrl, dbName) {
+global.OplogHandle = function (oplogUrl, dbName) {
   var self = this;
   self._oplogUrl = oplogUrl;
   self._dbName = dbName;
@@ -180,7 +180,7 @@ _.extend(OplogHandle.prototype, {
   _startTailing: function () {
     var self = this;
     // First, make sure that we're talking to the local database.
-    var mongodbUri = Npm.require('mongodb-uri');
+    var mongodbUri =   require('mongodb-uri');
     if (mongodbUri.parse(self._oplogUrl).database !== 'local') {
       throw Error("$MONGO_OPLOG_URL must be set to the 'local' database of " +
                   "a Mongo replica set");

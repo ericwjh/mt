@@ -1,4 +1,4 @@
-var sourcemap = Npm.require('source-map');
+var sourcemap =   require('source-map');
 
 Plugin.registerMinifier({
   extensions: ["css"]

@@ -1,5 +1,5 @@
-var Fiber = Npm.require('fibers');
-var url = Npm.require('url');
+var Fiber =   require('fibers');
+var url =   require('url');
 
 OAuth = {};
 OAuthTest = {};

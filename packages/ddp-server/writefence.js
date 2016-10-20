@@ -1,5 +1,5 @@
-var path = Npm.require('path');
-var Future = Npm.require(path.join('fibers', 'future'));
+var path =   require('path');
+var Future =   require('fibers/future');
 
 // A write fence collects a group of writes, and provides a callback
 // when all of the writes are fully committed and propagated (all
@@ -54,8 +54,9 @@ _.extend(DDPServer._WriteFence.prototype, {
   // uncommitted writes, it will activate.
   arm: function () {
     var self = this;
-    if (self === DDPServer._CurrentWriteFence.get())
+    if (self === DDPServer._CurrentWriteFence.get()){
       throw Error("Can't arm the current fence");
+    }
     self.armed = true;
     self._maybeFire();
   },
@@ -100,6 +101,7 @@ _.extend(DDPServer._WriteFence.prototype, {
         try {
           func(self);
         } catch (err) {
+          console.log(err)
           Meteor._debug("exception in write fence callback:", err);
         }
       }

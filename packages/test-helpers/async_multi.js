@@ -126,7 +126,7 @@ testAsyncMulti = function (name, funcs) {
       }
       else {
         var em = new ExpectationManager(test, function () {
-          Meteor.clearTimeout(timer);
+          clearTimeout(timer);
           runNext();
         });
 
@@ -144,7 +144,7 @@ testAsyncMulti = function (name, funcs) {
         } catch (exception) {
           if (em.cancel())
             test.exception(exception);
-          Meteor.clearTimeout(timer);
+          clearTimeout(timer);
           // Because we called test.exception, we're not to call onComplete.
           return;
         }

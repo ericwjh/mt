@@ -1,4 +1,3 @@
-var RoutePolicy = Package.routepolicy.RoutePolicy;                                                                                 
 var fs = require("fs"); 
 var http = require("http"); 
 var os = require("os"); 
@@ -6,7 +5,7 @@ var path = require("path");
 var url = require("url"); 
 var crypto = require("crypto"); 
 
-var connect = require('express');
+var express = require('express');
 // var compress = require('compression') 
 var qs = require('qs') 
 // var parseurl = require('parseurl'); 
@@ -15,7 +14,7 @@ var qs = require('qs')
 
 var Future = require('fibers/future'); 
 var Fiber = require('fibers'); 
-var _ = require('lodash')
+// var _ = require('lodash')
 
 var SHORT_SOCKET_TIMEOUT = 5 * 1000; 
 var LONG_SOCKET_TIMEOUT = 120 * 1000; 
@@ -76,6 +75,7 @@ WebApp.categorizeRequest = function(req) {
 }; 
                                                                                  
 function appUrl(url) { 
+	if (/\.js$/.test(url)) return false
 	if (url === '/favicon.ico' || url === '/robots.txt') return false; 
 	                                                         
 	if (url === '/app.manifest') return false; 
@@ -126,11 +126,15 @@ WebApp._timeoutAdjustmentRequestCallback = function(req, res) {
 
 function runWebAppServer() { 
 	                                                                                                     
-	var app = connect(); 
+	var app = express(); 
 	                                                                     
-	var rawConnectHandlers = connect(); 
+	var rawConnectHandlers = express(); 
 	app.use(rawConnectHandlers); 
-	                                                                   
+	
+	// app.get('/download', function(req, res){
+	// 	res.send('hello download')
+	// })
+
 	app.use(function(request, response, next) { 
 		var pathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX; 
 		var url = require('url').parse(request.url); 
@@ -149,19 +153,28 @@ function runWebAppServer() {
 		} 
 	}); 
 	
-	// app.use(qs); 
-	                                                             
-	var packageAndAppHandlers = connect(); 
+	var packageAndAppHandlers = express(); 
 	app.use(packageAndAppHandlers); 
+
+	if (process.env.CLIENT_JS) {
+		app.use('/client/index.js', function(req,res){
+			res.writeHead(res.statusCode || 200, { 
+				'Content-Type': 'Content-Type:application/javascript' 
+			}); 
+			res.write(process.env.CLIENT_JS)
+			res.end()
+		})
+	} else {
+		app.use('/client',express.static(path.resolve(eval('__dirname'),'../client/')))
+	}
 	
 	app.use(function(req, res, next) { 
 		Fiber(function() {
 			if (!appUrl(req.url)) return next(); 
-			
 			res.writeHead(res.statusCode || 200, { 
 				'Content-Type': 'text/html; charset=utf-8' 
 			}); 
-			res.write(fs.readFileSync(path.resolve(process.cwd(),process.env.INDEX_HTML)))
+			res.write(process.env.INDEX_HTML)
 			res.end()
 		}).run(); 
 	}) 
@@ -170,8 +183,9 @@ function runWebAppServer() {
 		res.writeHead(404); 
 		res.end(); 
 	}); 
-	
+
 	var httpServer = http.createServer(app); 
+	httpServer.app = app
 	var onListeningCallbacks = []; 
 	
 	// After 5 seconds w/o data on a socket, kill it.  On the other hand, if                                           
@@ -186,8 +200,8 @@ function runWebAppServer() {
 	
 	// start up app                                                                                                    
 	_.extend(WebApp, { 
-		connectHandlers: packageAndAppHandlers, 
 		rawConnectHandlers: rawConnectHandlers, 
+		connectHandlers: packageAndAppHandlers, 
 		httpServer: httpServer, 
 		
 		onListening: function onListening(f) { 

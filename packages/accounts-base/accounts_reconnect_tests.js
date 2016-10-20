@@ -61,7 +61,7 @@ if (Meteor.isClient) {
 
     function onUser2LoggedInAfterReconnectAfterFailedLogin() {
       onLoginStopper.stop();
-      Meteor.clearTimeout(timeoutHandle);
+      clearTimeout(timeoutHandle);
       Meteor.call('getConnectionUserId', checkFinalState);
     }
 

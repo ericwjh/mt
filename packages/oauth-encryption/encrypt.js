@@ -1,4 +1,4 @@
-var crypto = Npm.require("crypto");
+var crypto =   require("crypto");
 // XXX We hope to be able to use the `crypto` module exclusively when
 // Node supports GCM in version 0.11.
 var gcm = NpmModuleNodeAesGcm;

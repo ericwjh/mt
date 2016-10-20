@@ -8,7 +8,7 @@
 //      each value is retained
 //   - IdMap - Constructor - Optional - custom IdMap class to store id->index
 //       mappings internally. Standard IdMap is used by default.
-MaxHeap = function (comparator, options) {
+global.MaxHeap = function (comparator, options) {
   if (! _.isFunction(comparator))
     throw new Error('Passed comparator is invalid, should be a comparison function');
   var self = this;

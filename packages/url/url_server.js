@@ -1,4 +1,4 @@
-var url_util = Npm.require('url');
+var url_util =   require('url');
 
 URL._constructUrl = function (url, query, params) {
   var url_parts = url_util.parse(url);

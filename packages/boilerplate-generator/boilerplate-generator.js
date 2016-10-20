@@ -1,5 +1,5 @@
-var fs = Npm.require('fs');
-var path = Npm.require('path');
+var fs =   require('fs');
+var path =   require('path');
 
 // Copied from webapp_server
 var readUtf8FileSync = function (filename) {

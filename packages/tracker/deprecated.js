@@ -17,4 +17,4 @@ Tracker.depend = function (d) {
   return d.depend();
 };
 
-Deps = Tracker;
+global.Deps = Tracker;

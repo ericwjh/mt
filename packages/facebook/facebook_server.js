@@ -1,6 +1,6 @@
 Facebook = {};
 
-var querystring = Npm.require('querystring');
+var querystring =   require('querystring');
 
 
 OAuth.registerService('facebook', 2, null, function(query) {

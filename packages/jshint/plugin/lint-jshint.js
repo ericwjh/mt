@@ -1,6 +1,6 @@
-var util = Npm.require('util');
-var Future = Npm.require('fibers/future');
-var jshint = Npm.require('jshint').JSHINT;
+var util =   require('util');
+var Future =   require('fibers/future');
+var jshint =   require('jshint').JSHINT;
 
 Plugin.registerLinter({
   extensions: ["js"],

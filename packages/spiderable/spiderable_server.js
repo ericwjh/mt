@@ -1,7 +1,7 @@
-var fs = Npm.require('fs');
-var child_process = Npm.require('child_process');
-var querystring = Npm.require('querystring');
-var urlParser = Npm.require('url');
+var fs =   require('fs');
+var child_process =   require('child_process');
+var querystring =   require('querystring');
+var urlParser =   require('url');
 
 // list of bot user agents that we want to serve statically, but do
 // not obey the _escaped_fragment_ protocol. The page is served

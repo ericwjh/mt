@@ -317,7 +317,7 @@ Tinytest.addAsync("ecmascript - runtime - misc support", (test, done) => {
   }).catch(error => {
     test.equal(error, expectedError);
     if (Meteor.isServer) {
-      const Fiber = Npm.require("fibers");
+      const Fiber =   require("fibers");
       // Make sure the Promise polyfill runs callbacks in a Fiber.
       test.instanceOf(Fiber.current, Fiber);
     }

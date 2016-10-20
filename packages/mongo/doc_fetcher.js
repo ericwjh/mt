@@ -1,7 +1,7 @@
-var Fiber = Npm.require('fibers');
-var Future = Npm.require('fibers/future');
+var Fiber =   require('fibers');
+var Future =   require('fibers/future');
 
-DocFetcher = function (mongoConnection) {
+global.DocFetcher = function (mongoConnection) {
   var self = this;
   self._mongoConnection = mongoConnection;
   // Map from cache key -> [callback]

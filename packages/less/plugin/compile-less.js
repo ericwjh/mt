@@ -1,6 +1,6 @@
 const path = Plugin.path;
-const less = Npm.require('less');
-const Future = Npm.require('fibers/future');
+const less =   require('less');
+const Future =   require('fibers/future');
 
 Plugin.registerCompiler({
   // *.lessimport has been deprecated since 0.7.1, but it still works. We

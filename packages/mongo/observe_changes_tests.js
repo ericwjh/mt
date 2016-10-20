@@ -372,8 +372,8 @@ testAsyncMulti("observeChanges - bad query", [
 
     // Test that if two copies of the same bad observeChanges run in parallel
     // and are de-duped, both observeChanges calls will throw.
-    var Fiber = Npm.require('fibers');
-    var Future = Npm.require('fibers/future');
+    var Fiber =   require('fibers');
+    var Future =   require('fibers/future');
     var f1 = new Future;
     var f2 = new Future;
     Fiber(function () {

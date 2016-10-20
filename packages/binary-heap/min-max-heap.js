@@ -10,7 +10,7 @@
 // (http://www.cs.otago.ac.nz/staffpriv/mike/Papers/MinMaxHeaps/MinMaxHeaps.pdf)
 // and Interval Heaps
 // (http://www.cise.ufl.edu/~sahni/dsaac/enrich/c13/double.htm)
-MinMaxHeap = function (comparator, options) {
+global.MinMaxHeap = function (comparator, options) {
   var self = this;
 
   MaxHeap.call(self, comparator, options);

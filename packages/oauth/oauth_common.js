@@ -36,7 +36,7 @@ OAuth._redirectUri = function (serviceName, config, params, absoluteUrlOptions) 
       // XXX Maybe we should put this in a separate package or something
       // that is used here and by boilerplate-generator? Or maybe
       // `Meteor.absoluteUrl` should know how to do this?
-      var url = Npm.require("url");
+      var url =   require("url");
       var parsedRootUrl = url.parse(rootUrl);
       if (parsedRootUrl.hostname === "localhost") {
         parsedRootUrl.hostname = "10.0.2.2";

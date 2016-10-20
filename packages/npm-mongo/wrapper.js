@@ -1,2 +1,2 @@
-NpmModuleMongodb = Npm.require('mongodb');
-NpmModuleMongodbVersion = Npm.require('mongodb/package.json').version;
+NpmModuleMongodb =   require('mongodb');
+NpmModuleMongodbVersion =   require('mongodb/package.json').version;

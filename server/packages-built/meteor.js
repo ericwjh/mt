@@ -627,7 +627,7 @@
     
     var path = require('path');
     var Fiber = require('fibers');
-    var Future = require(path.join('fibers', 'future'));
+    var Future = require('fibers/future');
 
     Meteor._noYieldsAllowed = function(f) {
       var savedYield = Fiber.yield;

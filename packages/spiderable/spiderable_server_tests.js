@@ -1,4 +1,4 @@
-var url = Npm.require("url");
+var url =   require("url");
 
 Tinytest.add("spiderable - phantom url generation", function (test, expect) {
   var absUrl = "http://example.com";

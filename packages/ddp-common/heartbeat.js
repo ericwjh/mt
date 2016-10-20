@@ -50,7 +50,7 @@ _.extend(DDPCommon.Heartbeat.prototype, {
   _clearHeartbeatIntervalTimer: function () {
     var self = this;
     if (self._heartbeatIntervalHandle) {
-      Meteor.clearInterval(self._heartbeatIntervalHandle);
+      clearInterval(self._heartbeatIntervalHandle);
       self._heartbeatIntervalHandle = null;
     }
   },
@@ -58,7 +58,7 @@ _.extend(DDPCommon.Heartbeat.prototype, {
   _clearHeartbeatTimeoutTimer: function () {
     var self = this;
     if (self._heartbeatTimeoutHandle) {
-      Meteor.clearTimeout(self._heartbeatTimeoutHandle);
+      clearTimeout(self._heartbeatTimeoutHandle);
       self._heartbeatTimeoutHandle = null;
     }
   },

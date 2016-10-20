@@ -1,6 +1,6 @@
 var Future;
 if (Meteor.isServer)
-  Future = Npm.require('fibers/future');
+  Future =   require('fibers/future');
 
 /******************************************************************************/
 /* TestCaseResults                                                            */

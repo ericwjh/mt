@@ -1,4 +1,4 @@
-var meteorBabel = Npm.require('meteor-babel');
+var meteorBabel =   require('meteor-babel');
 
 /**
  * Returns a new object containing default options appropriate for

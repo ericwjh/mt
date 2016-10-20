@@ -1,7 +1,7 @@
 const path = Plugin.path;
-const Future = Npm.require('fibers/future');
-const LRU = Npm.require('lru-cache');
-const async = Npm.require('async');
+const Future =   require('fibers/future');
+const LRU =   require('lru-cache');
+const async =   require('async');
 
 // MultiFileCachingCompiler is like CachingCompiler, but for implementing
 // languages which allow files to reference each other, such as CSS

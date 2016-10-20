@@ -1,0 +1,21 @@
+# Quick Start
+```js
+// client
+require('mt/client')
+Meteor.call('hello', function(fruit){
+	console.log(fruit)
+})
+```
+
+```js
+// server
+var server = require('mt/server')
+var fruits = new Mongo.Collection('fruits')
+server.listen(8080, function(){
+	Meteor.methods({
+		hello: function(){
+			return fruits.findOne({})
+		}
+	})
+})
+```

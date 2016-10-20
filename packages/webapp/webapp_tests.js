@@ -1,6 +1,6 @@
-var url = Npm.require("url");
-var crypto = Npm.require("crypto");
-var http = Npm.require("http");
+var url =   require("url");
+var crypto =   require("crypto");
+var http =   require("http");
 
 var additionalScript = "(function () { var foo = 1; })";
 WebAppInternals.addStaticJs(additionalScript);

@@ -22,7 +22,7 @@ Minimongo._pathsElidingNumericKeys = function (paths) {
   });
 };
 
-combineImportantPathsIntoProjection = function (paths, projection) {
+global.combineImportantPathsIntoProjection = function (paths, projection) {
   var prjDetails = projectionDetails(projection);
   var tree = prjDetails.tree;
   var mergedProjection = {};

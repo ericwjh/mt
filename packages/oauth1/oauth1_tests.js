@@ -1,5 +1,5 @@
 var testPendingCredential = function (test) {
-  var http = Npm.require('http');
+  var http =   require('http');
   var twitterfooId = Random.id();
   var twitterfooName = 'nickname' + Random.id();
   var twitterfooAccessToken = Random.id();

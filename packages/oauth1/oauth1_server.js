@@ -1,4 +1,4 @@
-var url = Npm.require("url");
+var url =   require("url");
 
 // connect middleware
 OAuth._requestHandlers['1'] = function (service, query, res) {

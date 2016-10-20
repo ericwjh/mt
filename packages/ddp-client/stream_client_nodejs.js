@@ -130,8 +130,8 @@ _.extend(LivedataTest.ClientStream.prototype, {
     // Since server-to-server DDP is still an experimental feature, we only
     // require the module if we actually create a server-to-server
     // connection.
-    var FayeWebSocket = Npm.require('faye-websocket');
-    var deflate = Npm.require('permessage-deflate');
+    var FayeWebSocket =   require('faye-websocket');
+    var deflate =   require('permessage-deflate');
 
     var targetUrl = toWebsocketUrl(self.endpoint);
     var fayeOptions = {

@@ -1,4 +1,4 @@
-PollingObserveDriver = function (options) {
+global.PollingObserveDriver = function (options) {
   var self = this;
 
   self._cursorDescription = options.cursorDescription;
@@ -68,7 +68,7 @@ PollingObserveDriver = function (options) {
     var intervalHandle = Meteor.setInterval(
       _.bind(self._ensurePollIsScheduled, self), pollingInterval);
     self._stopCallbacks.push(function () {
-      Meteor.clearInterval(intervalHandle);
+      clearInterval(intervalHandle);
     });
   }
 

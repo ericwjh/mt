@@ -36,7 +36,7 @@
 // callback will propagate up to the iterator function, and will
 // terminate calling the remaining callbacks if not caught.
 
-Hook = function (options) {
+global.Hook = function (options) {
   var self = this;
   options = options || {};
   self.nextCallbackId = 0;

@@ -7,26 +7,26 @@
  * these outside of a fiber they will explode!
  */
 
-var path = Npm.require('path');
-var MongoDB = NpmModuleMongodb;
-var Fiber = Npm.require('fibers');
-var Future = Npm.require(path.join('fibers', 'future'));
+var path =   require('path');
+var MongoDB = require('mongodb');
+var Fiber =   require('fibers');
+var Future =   require('fibers/future');
 
-MongoInternals = {};
-MongoTest = {};
+global.MongoInternals = {};
+global.MongoTest = {};
 
-MongoInternals.NpmModules = {
-  mongodb: {
-    version: NpmModuleMongodbVersion,
-    module: MongoDB
-  }
-};
+// MongoInternals.NpmModules = {
+//   mongodb: {
+//     version: NpmModuleMongodbVersion,
+//     module: MongoDB
+//   }
+// };
 
 // Older version of what is now available via
 // MongoInternals.NpmModules.mongodb.module.  It was never documented, but
 // people do use it.
 // XXX COMPAT WITH 1.0.3.2
-MongoInternals.NpmModule = MongoDB;
+// MongoInternals.NpmModule = MongoDB;
 
 // This is used to add or remove EJSON from the beginning of everything nested
 // inside an EJSON custom type. It should only be called on pure JSON!
@@ -124,7 +124,7 @@ var replaceTypes = function (document, atomTransformer) {
 };
 
 
-MongoConnection = function (url, options) {
+global.MongoConnection = function (url, options) {
   var self = this;
   options = options || {};
   self._observeMultiplexers = {};
@@ -833,14 +833,14 @@ MongoConnection.prototype._dropIndex = function (collectionName, index) {
 // they start sending observeChanges callbacks (and a ready() invocation) to
 // their ObserveMultiplexer, and you stop them by calling their stop() method.
 
-CursorDescription = function (collectionName, selector, options) {
+global.CursorDescription = function (collectionName, selector, options) {
   var self = this;
   self.collectionName = collectionName;
   self.selector = Mongo.Collection._rewriteSelector(selector);
   self.options = options || {};
 };
 
-Cursor = function (mongo, cursorDescription) {
+global.Cursor = function (mongo, cursorDescription) {
   var self = this;
 
   self._mongo = mongo;
@@ -1244,7 +1244,7 @@ MongoConnection.prototype._observeChanges = function (
 // listenCallback is the same kind of (notification, complete) callback passed
 // to InvalidationCrossbar.listen.
 
-listenAll = function (cursorDescription, listenCallback) {
+global.listenAll = function (cursorDescription, listenCallback) {
   var listeners = [];
   forEachTrigger(cursorDescription, function (trigger) {
     listeners.push(DDPServer._InvalidationCrossbar.listen(
@@ -1260,7 +1260,7 @@ listenAll = function (cursorDescription, listenCallback) {
   };
 };
 
-forEachTrigger = function (cursorDescription, triggerCallback) {
+global.forEachTrigger = function (cursorDescription, triggerCallback) {
   var key = {collection: cursorDescription.collectionName};
   var specificIds = LocalCollection._idsMatchedBySelector(
     cursorDescription.selector);

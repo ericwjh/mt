@@ -1,6 +1,6 @@
-var crypto = Npm.require('crypto');
-var fs = Npm.require('fs');
-var path = Npm.require('path');
+var crypto =   require('crypto');
+var fs =   require('fs');
+var path =   require('path');
 
 var _disableSizeCheck = false;
 

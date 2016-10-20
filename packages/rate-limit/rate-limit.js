@@ -105,7 +105,7 @@ _.extend(Rule.prototype, {
 });
 
 // Initialize rules to be an empty dictionary.
-RateLimiter = function () {
+global.RateLimiter = function () {
   var self = this;
 
   // Dictionary of all rules associated with this RateLimiter, keyed by their

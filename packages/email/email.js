@@ -1,5 +1,5 @@
-var Future = Npm.require('fibers/future');
-var urlModule = Npm.require('url');
+var Future =   require('fibers/future');
+var urlModule =   require('url');
 
 Email = {};
 EmailTest = {};
@@ -7,8 +7,8 @@ EmailTest = {};
 EmailInternals = {
   NpmModules: {
     mailcomposer: {
-      version: Npm.require('mailcomposer/package.json').version,
-      module: Npm.require('mailcomposer')
+      version:   require('mailcomposer/package.json').version,
+      module:   require('mailcomposer')
     }
   }
 };
@@ -29,7 +29,7 @@ var makePool = function (mailUrlString) {
             pass: parts[1]};
   }
 
-  var simplesmtp = Npm.require('simplesmtp');
+  var simplesmtp =   require('simplesmtp');
   var pool = simplesmtp.createClientPool(
     port,  // Defaults to 25
     mailUrl.hostname,  // Defaults to "localhost"

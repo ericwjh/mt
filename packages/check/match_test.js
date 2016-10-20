@@ -418,7 +418,7 @@ Tinytest.add("check - Match error message", function (test) {
 
 // Regression test for https://github.com/meteor/meteor/issues/2136
 Meteor.isServer && Tinytest.addAsync("check - non-fiber check works", function (test, onComplete) {
-  var Fiber = Npm.require('fibers');
+  var Fiber =   require('fibers');
 
   // We can only call test.isTrue inside normal Meteor Fibery code, so give us a
   // bindEnvironment way to get back.

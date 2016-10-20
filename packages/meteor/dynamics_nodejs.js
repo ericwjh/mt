@@ -1,11 +1,12 @@
 // Fiber-aware implementation of dynamic scoping, for use on the server
 
-var Fiber = Npm.require('fibers');
+var Fiber =   require('fibers');
 
 var nextSlot = 0;
 
 Meteor._nodeCodeMustBeInFiber = function () {
   if (!Fiber.current) {
+    console.log('!Fiber.current')
     throw new Error("Meteor code must always run within a Fiber. " +
                     "Try wrapping callbacks that you pass to non-Meteor " +
                     "libraries with Meteor.bindEnvironment.");

@@ -1,6 +1,6 @@
-var crypto = Npm.require("crypto");
-var querystring = Npm.require("querystring");
-var urlModule = Npm.require("url");
+var crypto =   require("crypto");
+var querystring =   require("querystring");
+var urlModule =   require("url");
 
 // An OAuth1 wrapper around http calls which helps get tokens and
 // takes care of HTTP headers

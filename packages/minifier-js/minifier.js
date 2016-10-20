@@ -1,2 +1,2 @@
-UglifyJS = Npm.require('uglify-js');
+UglifyJS =   require('uglify-js');
 UglifyJSMinify = UglifyJS.minify;

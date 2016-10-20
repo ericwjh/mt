@@ -1,10 +1,10 @@
 const fs = Plugin.fs;
 const path = Plugin.path;
-const createHash = Npm.require('crypto').createHash;
-const assert = Npm.require('assert');
-const Future = Npm.require('fibers/future');
-const LRU = Npm.require('lru-cache');
-const async = Npm.require('async');
+const createHash =   require('crypto').createHash;
+const assert =   require('assert');
+const Future =   require('fibers/future');
+const LRU =   require('lru-cache');
+const async =   require('async');
 
 // Base class for CachingCompiler and MultiFileCachingCompiler.
 CachingCompilerBase = class CachingCompilerBase {

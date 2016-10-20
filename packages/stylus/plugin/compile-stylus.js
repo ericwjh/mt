@@ -1,6 +1,6 @@
-const stylus = Npm.require('stylus');
-const nib = Npm.require('nib');
-const Future = Npm.require('fibers/future');
+const stylus =   require('stylus');
+const nib =   require('nib');
+const Future =   require('fibers/future');
 const fs = Plugin.fs;
 const path = Plugin.path;
 

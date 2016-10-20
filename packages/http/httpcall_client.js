@@ -123,7 +123,7 @@ HTTP.call = function(method, url, options, callback) {
     xhr.onreadystatechange = function(evt) {
       if (xhr.readyState === 4) { // COMPLETE
         if (timer)
-          Meteor.clearTimeout(timer);
+          clearTimeout(timer);
 
         if (timed_out) {
           callback(new Error("timeout"));

@@ -1,4 +1,4 @@
-var Fiber = Npm.require('fibers');
+var Fiber =   require('fibers');
 
 
 Tinytest.addAsync(

@@ -1,7 +1,7 @@
-var cssParse = Npm.require('css-parse');
-var cssStringify = Npm.require('css-stringify');
-var url = Npm.require('url');
-var path = Npm.require('path');
+var cssParse =   require('css-parse');
+var cssStringify =   require('css-stringify');
+var url =   require('url');
+var path =   require('path');
 
 CssTools = {
   parseCss: cssParse,

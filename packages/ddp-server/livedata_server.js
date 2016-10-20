@@ -1,6 +1,6 @@
-DDPServer = {};
+global.DDPServer = {};
 
-var Fiber = Npm.require('fibers');
+var Fiber =   require('fibers');
 
 // This file contains classes:
 // * Session - The server's connection to a single DDP client
@@ -546,12 +546,12 @@ _.extend(Session.prototype, {
           blocked = false;
           processNext();
         };
-
         if (_.has(self.protocol_handlers, msg.msg))
           self.protocol_handlers[msg.msg].call(self, msg, unblock);
         else
           self.sendError('Bad request', msg);
         unblock(); // in case the handler didn't already do it
+
       }).run();
     };
 
@@ -573,7 +573,8 @@ _.extend(Session.prototype, {
       if (!self.server.publish_handlers[msg.name]) {
         self.send({
           msg: 'nosub', id: msg.id,
-          error: new Meteor.Error(404, `Subscription '${msg.name}' not found`)});
+          // error: new Meteor.Error(404, `Subscription '${msg.name}' not found`)});
+          error: new Meteor.Error(404, "Subscription '"+msg.name+"' not found")});
         return;
       }
 
@@ -660,7 +661,8 @@ _.extend(Session.prototype, {
       if (!handler) {
         self.send({
           msg: 'result', id: msg.id,
-          error: new Meteor.Error(404, `Method '${msg.method}' not found`)});
+          // error: new Meteor.Error(404, `Method '${msg.method}' not found`)});
+          error: new Meteor.Error(404, "`Method '${msg.method}' not found`")});
         fence.arm();
         return;
       }
@@ -678,7 +680,7 @@ _.extend(Session.prototype, {
         randomSeed: randomSeed
       });
 
-      const promise = new Promise((resolve, reject) => {
+      const promise = new Promise(function(resolve, reject){
         // XXX It'd be better if we could hook into method handlers better but
         // for now, we need to check if the ddp-rate-limiter exists since we
         // have a weak requirement for the ddp-rate-limiter package to be added
@@ -706,18 +708,20 @@ _.extend(Session.prototype, {
 
         resolve(DDPServer._CurrentWriteFence.withValue(
           fence,
-          () => DDP._CurrentInvocation.withValue(
+          function() {
+            return DDP._CurrentInvocation.withValue(
             invocation,
-            () => maybeAuditArgumentChecks(
-              handler, invocation, msg.params,
-              "call to '" + msg.method + "'"
-            )
+            function()  {return maybeAuditArgumentChecks(
+                          handler, invocation, msg.params,
+                          "call to '" + msg.method + "'"
+                        )}
           )
+          } 
         ));
       });
 
       function finish() {
-        fence.arm();
+            fence.arm();
         unblock();
       }
 
@@ -726,17 +730,17 @@ _.extend(Session.prototype, {
         id: msg.id
       };
 
-      promise.then((result) => {
+      promise.then(function(result) {
         finish();
         if (result !== undefined) {
           payload.result = result;
         }
         self.send(payload);
-      }, (exception) => {
+      }, function(exception) {
         finish();
         payload.error = wrapInternalException(
           exception,
-          `while invoking method '${msg.method}'`
+          "`while invoking method '${msg.method}'`"
         );
         self.send(payload);
       });
@@ -1295,7 +1299,7 @@ _.extend(Subscription.prototype, {
 /* Server                                                                     */
 /******************************************************************************/
 
-Server = function (options) {
+global.Server = function (options) {
   var self = this;
 
   // The default heartbeat interval is 30 seconds on the server and 35
@@ -1586,7 +1590,7 @@ _.extend(Server.prototype, {
     var handler = self.method_handlers[name];
     var exception;
     if (!handler) {
-      exception = new Meteor.Error(404, `Method '${name}' not found`);
+      exception = new Meteor.Error(404, "`Method '${name}' not found`");
     } else {
       // If this is a method call from within another method, get the
       // user state from the outer method, otherwise don't allow

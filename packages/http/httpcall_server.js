@@ -1,11 +1,11 @@
-var path = Npm.require('path');
-var request = Npm.require('request');
-var url_util = Npm.require('url');
+var path =   require('path');
+var request =   require('request');
+var url_util =   require('url');
 
 HTTPInternals = {
   NpmModules: {
     request: {
-      version: Npm.require('request/package.json').version,
+      version:   require('request/package.json').version,
       module: request
     }
   }

@@ -1,5 +1,5 @@
-var Fiber = Npm.require('fibers');
-var Future = Npm.require('fibers/future');
+var Fiber =   require('fibers');
+var Future =   require('fibers/future');
 
 var PHASE = {
   QUERYING: "QUERYING",
@@ -28,7 +28,7 @@ var currentId = 0;
 // same simple interface: constructing it starts sending observeChanges
 // callbacks (and a ready() invocation) to the ObserveMultiplexer, and you stop
 // it by calling the stop() method.
-OplogObserveDriver = function (options) {
+global.OplogObserveDriver = function (options) {
   var self = this;
   self._usesOplog = true;  // tests look at this
 

@@ -1,5 +1,5 @@
 try {
-  NpmModuleNodeAesGcm = Npm.require('node-aes-gcm');
+  NpmModuleNodeAesGcm =   require('node-aes-gcm');
 } catch (err) {
   if (process.platform === "win32" &&
     err.message.match(/specified module could not be found/)) {

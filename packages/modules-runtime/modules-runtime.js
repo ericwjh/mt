@@ -7,7 +7,7 @@ var topLevelIdPattern = /^[^./]/;
 // This function will be called whenever a module identifier that hasn't
 // been installed is required. For backwards compatibility, and so that we
 // can require binary dependencies on the server, we implement the
-// fallback in terms of Npm.require.
+// fallback in terms of   require.
 options.fallback = function (id, parentId, error) {
   // For simplicity, we honor only top-level module identifiers here.
   // We could try to honor relative and absolute module identifiers by
@@ -17,8 +17,8 @@ options.fallback = function (id, parentId, error) {
   // the fallback for dependencies installed in node_modules directories.
   if (topLevelIdPattern.test(id)) {
     if (typeof Npm === "object" &&
-        typeof Npm.require === "function") {
-      return Npm.require(id);
+        typeof   require === "function") {
+      return   require(id);
     }
   }
 

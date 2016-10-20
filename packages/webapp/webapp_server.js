@@ -1,19 +1,19 @@
 ////////// Requires //////////
 
-var fs = Npm.require("fs");
-var http = Npm.require("http");
-var os = Npm.require("os");
-var path = Npm.require("path");
-var url = Npm.require("url");
-var crypto = Npm.require("crypto");
+var fs =   require("fs");
+var http =   require("http");
+var os =   require("os");
+var path =   require("path");
+var url =   require("url");
+var crypto =   require("crypto");
 
-var connect = Npm.require('connect');
-var parseurl = Npm.require('parseurl');
-var useragent = Npm.require('useragent');
-var send = Npm.require('send');
+var connect =   require('connect');
+var parseurl =   require('parseurl');
+var useragent =   require('useragent');
+var send =   require('send');
 
-var Future = Npm.require('fibers/future');
-var Fiber = Npm.require('fibers');
+var Future =   require('fibers/future');
+var Fiber =   require('fibers');
 
 var SHORT_SOCKET_TIMEOUT = 5*1000;
 var LONG_SOCKET_TIMEOUT = 120*1000;
@@ -23,7 +23,7 @@ WebAppInternals = {};
 
 WebAppInternals.NpmModules = {
   connect: {
-    version: Npm.require('connect/package.json').version,
+    version:   require('connect/package.json').version,
     module: connect
   }
 };
@@ -609,7 +609,7 @@ var runWebAppServer = function () {
   // Strip off the path prefix, if it exists.
   app.use(function (request, response, next) {
     var pathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX;
-    var url = Npm.require('url').parse(request.url);
+    var url =   require('url').parse(request.url);
     var pathname = url.pathname;
     // check if the path in the url starts with the path prefix (and the part
     // after the path prefix must start with a / if it exists.)

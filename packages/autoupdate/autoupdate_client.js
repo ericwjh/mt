@@ -102,7 +102,7 @@ Autoupdate._retrySubscription = function () {
                 var id = Meteor.setInterval(function () {
                   if (link.sheet) {
                     executeCallback();
-                    Meteor.clearInterval(id);
+                    clearInterval(id);
                   }
                 }, 50);
               }

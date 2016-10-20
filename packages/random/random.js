@@ -8,7 +8,7 @@
 // that to construct hex string.
 
 if (Meteor.isServer)
-  var nodeCrypto = Npm.require('crypto');
+  var nodeCrypto =   require('crypto');
 
 // see http://baagoe.org/en/wiki/Better_random_numbers_for_javascript
 // for a full discussion and Alea implementation.
@@ -286,7 +286,8 @@ if (Meteor.isServer) {
 
 // Create a non-cryptographically secure PRNG with a given seed (using
 // the Alea algorithm)
-Random.createWithSeeds = function (...seeds) {
+Random.createWithSeeds = function () {
+  var seeds = Array.prototype.slice.call(arguments,0)
   if (seeds.length === 0) {
     throw new Error("No seeds were provided");
   }

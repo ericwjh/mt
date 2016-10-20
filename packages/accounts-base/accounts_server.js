@@ -1,4 +1,4 @@
-var crypto = Npm.require('crypto');
+var crypto =   require('crypto');
 
 import {AccountsCommon} from "./accounts_common.js";
 
@@ -1125,7 +1125,7 @@ Ap.config = function (options) {
   if (_.has(this._options, "loginExpirationInDays") &&
       this._options.loginExpirationInDays === null &&
       this.expireTokenInterval) {
-    Meteor.clearInterval(this.expireTokenInterval);
+    clearInterval(this.expireTokenInterval);
     this.expireTokenInterval = null;
   }
 

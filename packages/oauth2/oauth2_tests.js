@@ -1,5 +1,5 @@
 var testPendingCredential = function (test) {
-  var http = Npm.require('http');
+  var http =   require('http');
   var foobookId = Random.id();
   var foobookOption1 = Random.id();
   var credentialToken = Random.id();

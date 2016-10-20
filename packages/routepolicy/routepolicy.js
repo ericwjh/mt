@@ -24,7 +24,7 @@
 // routes would break tinytest... so allow policy instances to be
 // constructed for testing.
 
-RoutePolicyTest = {};
+global.RoutePolicyTest = {};
 
 var RoutePolicyConstructor = RoutePolicyTest.Constructor = function () {
   var self = this;
@@ -125,4 +125,4 @@ _.extend(RoutePolicyConstructor.prototype, {
   }
 });
 
-RoutePolicy = new RoutePolicyConstructor();
+global.RoutePolicy = new RoutePolicyConstructor();

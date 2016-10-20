@@ -1,4 +1,4 @@
-var url = Npm.require("url");
+var url =   require("url");
 
 // Unfortunately we can't use a connect middleware here since
 // sockjs installs itself prior to all existing listeners

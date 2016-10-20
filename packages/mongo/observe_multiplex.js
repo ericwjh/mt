@@ -1,6 +1,6 @@
-var Future = Npm.require('fibers/future');
+var Future =   require('fibers/future');
 
-ObserveMultiplexer = function (options) {
+global.ObserveMultiplexer = function (options) {
   var self = this;
 
   if (!options || !_.has(options, 'ordered'))
@@ -212,7 +212,7 @@ _.extend(ObserveMultiplexer.prototype, {
 
 
 var nextObserveHandleId = 1;
-ObserveHandle = function (multiplexer, callbacks) {
+global.ObserveHandle = function (multiplexer, callbacks) {
   var self = this;
   // The end user is only supposed to call stop().  The other fields are
   // accessible to the multiplexer, though.
