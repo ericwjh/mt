@@ -28,7 +28,7 @@ var currentId = 0;
 // same simple interface: constructing it starts sending observeChanges
 // callbacks (and a ready() invocation) to the ObserveMultiplexer, and you stop
 // it by calling the stop() method.
-global.OplogObserveDriver = function (options) {
+module.exports = global.OplogObserveDriver = function (options) {
   var self = this;
   self._usesOplog = true;  // tests look at this
 

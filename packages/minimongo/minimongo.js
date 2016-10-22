@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // XXX type checking on selectors (graceful error if malformed)
 
 // LocalCollection: a set of documents that supports queries and modifiers.
@@ -238,11 +239,12 @@ LocalCollection.Cursor.prototype._publishCursor = function (sub) {
   var collection = self.collection.name;
 
   // XXX minimongo should not depend on mongo-livedata!
-  if (! Package.mongo) {
-    throw new Error("Can't publish from Minimongo without the `mongo` package.");
-  }
+  // if (! Package.mongo) {
+  //   throw new Error("Can't publish from Minimongo without the `mongo` package.");
+  // }
+  var Mongo = require('../mongo/collection.js')
 
-  return Package.mongo.Mongo.Collection._publishCursor(self, sub, collection);
+  return Mongo.Collection._publishCursor(self, sub, collection);
 };
 
 LocalCollection.Cursor.prototype._getCollectionName = function () {

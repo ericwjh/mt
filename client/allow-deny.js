@@ -1,3 +1,6 @@
+var _ = require('underscore')
+var check = require('../packages/check/match.js').check
+var Match = require('../packages/check/match.js').Match
 ///
 /// Remote methods and access control.
 ///
@@ -31,8 +34,8 @@
 // Meteor may call your deny() and allow() functions in any order, and may not
 // call all of them if it is able to make a decision without calling them all
 // (so don't include side effects).
-Package.insecure = true
-global.AllowDeny = {
+var insecure = true
+module.exports = global.AllowDeny = {
   CollectionPrototype: {}
 };
 
@@ -117,7 +120,6 @@ CollectionPrototype._defineMutationMethods = function(options) {
         if (self._connection[handlerPropName] &&
           typeof self._connection[handlerPropName][methodName] === 'function') return;
       }
-
       m[methodName] = function (/* ... */) {
         // All the methods do their own validation, instead of using check().
         check(arguments, [Match.Any]);
@@ -154,8 +156,6 @@ CollectionPrototype._defineMutationMethods = function(options) {
           // single-ID selectors.
           // if (method !== 'insert')
           //   throwIfSelectorIsNotId(args[0], method);
-          console.log('(self._restricted)', self._restricted)
-          console.log('(self._isInsecure())', self._isInsecure())
           if (self._restricted) {
             // short circuit if there is no way it will pass.
             if (self._validators[method].allow.length === 0) {
@@ -190,6 +190,7 @@ CollectionPrototype._defineMutationMethods = function(options) {
             throw new Meteor.Error(403, "Access denied1");
           }
         } catch (e) {
+          console.log(e)
           if (e.name === 'MongoError' || e.name === 'MinimongoError') {
             throw new Meteor.Error(409, e.toString());
           } else {
@@ -220,7 +221,7 @@ CollectionPrototype._updateFetch = function (fields) {
 CollectionPrototype._isInsecure = function () {
   const self = this;
   if (self._insecure === undefined)
-    return !!Package.insecure;
+    return !!insecure;
   return self._insecure;
 };
 

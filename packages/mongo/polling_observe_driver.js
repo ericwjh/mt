@@ -1,4 +1,5 @@
-global.PollingObserveDriver = function (options) {
+var _ =   require('underscore');
+module.exports = global.PollingObserveDriver = function (options) {
   var self = this;
 
   self._cursorDescription = options.cursorDescription;

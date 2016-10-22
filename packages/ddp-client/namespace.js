@@ -4,3 +4,5 @@
  */
 global.DDP          = {};
 global.LivedataTest = {};
+
+module.exports= DDP

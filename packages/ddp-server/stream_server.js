@@ -1,4 +1,6 @@
-var url =   require('url');
+var url = require('url');
+var sockjs = require('sockjs');
+var _ = require('underscore')
 
 // By default, we use the permessage-deflate extension with default
 // configuration. If $SERVER_WEBSOCKET_COMPRESSION is set, then it must be valid
@@ -11,13 +13,12 @@ var url =   require('url');
 // crash the tool during isopacket load if your JSON doesn't parse. This is only
 // a problem because the tool has to load the DDP server code just in order to
 // be a DDP client; see https://github.com/meteor/meteor/issues/3452 .)
-var websocketExtensions = _.once(function () {
+var websocketExtensions = _.once(function() {
   var extensions = [];
 
-  var websocketCompressionConfig = process.env.SERVER_WEBSOCKET_COMPRESSION
-        ? JSON.parse(process.env.SERVER_WEBSOCKET_COMPRESSION) : {};
+  var websocketCompressionConfig = process.env.SERVER_WEBSOCKET_COMPRESSION ? JSON.parse(process.env.SERVER_WEBSOCKET_COMPRESSION) : {};
   if (websocketCompressionConfig) {
-    extensions.push(  require('permessage-deflate').configure(
+    extensions.push(require('permessage-deflate').configure(
       websocketCompressionConfig
     ));
   }
@@ -25,20 +26,21 @@ var websocketExtensions = _.once(function () {
   return extensions;
 });
 
-var pathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX ||  "";
+// var pathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
 
-global.StreamServer = function () {
+var StreamServer = module.exports = function(httpServer, pathPrefix) {
+  this.pathPrefix = pathPrefix || "";
   var self = this;
+  self.httpServer = httpServer;
   self.registration_callbacks = [];
   self.open_sockets = [];
 
   // Because we are installing directly onto WebApp.httpServer instead of using
   // WebApp.app, we have to process the path prefix ourselves.
-  self.prefix = pathPrefix + '/sockjs';
-  RoutePolicy.declare(self.prefix + '/', 'network');
+  self.prefix = this.pathPrefix + '/sockjs';
+  // RoutePolicy.declare(self.prefix + '/', 'network');
 
   // set up sockjs
-  var sockjs =   require('sockjs');
   var serverOptions = {
     prefix: self.prefix,
     log: function() {},
@@ -76,20 +78,33 @@ global.StreamServer = function () {
   // request handler that adjusts idle timeouts while we have an outstanding
   // request.  This compensates for the fact that sockjs removes all listeners
   // for "request" to add its own.
-  WebApp.httpServer.removeListener(
-    'request', WebApp._timeoutAdjustmentRequestCallback);
-  self.server.installHandlers(WebApp.httpServer);
-  WebApp.httpServer.addListener(
-    'request', WebApp._timeoutAdjustmentRequestCallback);
+  var SHORT_SOCKET_TIMEOUT = 5 * 1000;
+  var LONG_SOCKET_TIMEOUT = 120 * 1000
+  _timeoutAdjustmentRequestCallback = function(req, res) {
+    req.setTimeout(LONG_SOCKET_TIMEOUT);
+    var finishListeners = res.listeners('finish');
+    res.removeAllListeners('finish');
+    res.on('finish', function() {
+      res.setTimeout(SHORT_SOCKET_TIMEOUT);
+    });
+    _.each(finishListeners, function(l) {
+      res.on('finish', l);
+    });
+  };
+  httpServer.removeListener(
+    'request', _timeoutAdjustmentRequestCallback);
+  self.server.installHandlers(httpServer);
+  httpServer.addListener(
+    'request', _timeoutAdjustmentRequestCallback);
 
   // Support the /websocket endpoint
   self._redirectWebsocketEndpoint();
 
-  self.server.on('connection', function (socket) {
-    socket.send = function (data) {
+  self.server.on('connection', function(socket) {
+    socket.send = function(data) {
       socket.write(data);
     };
-    socket.on('close', function () {
+    socket.on('close', function() {
       self.open_sockets = _.without(self.open_sockets, socket);
     });
     self.open_sockets.push(socket);
@@ -99,11 +114,13 @@ global.StreamServer = function () {
     // concerned about people upgrading from a pre-0.7.0 release. Also,
     // remove the clause in the client that ignores the welcome message
     // (livedata_connection.js)
-    socket.send(JSON.stringify({server_id: "0"}));
+    socket.send(JSON.stringify({
+      server_id: "0"
+    }));
 
     // call all our callbacks when we get a new socket. they will do the
     // work of setting up handlers and such for specific messages.
-    _.each(self.registration_callbacks, function (callback) {
+    _.each(self.registration_callbacks, function(callback) {
       callback(socket);
     });
   });
@@ -113,16 +130,16 @@ global.StreamServer = function () {
 _.extend(StreamServer.prototype, {
   // call my callback when a new socket connects.
   // also call it for all current connections.
-  register: function (callback) {
+  register: function(callback) {
     var self = this;
     self.registration_callbacks.push(callback);
-    _.each(self.all_sockets(), function (socket) {
+    _.each(self.all_sockets(), function(socket) {
       callback(socket);
     });
   },
 
   // get a list of all sockets
-  all_sockets: function () {
+  all_sockets: function() {
     var self = this;
     return _.values(self.open_sockets);
   },
@@ -137,21 +154,20 @@ _.extend(StreamServer.prototype, {
     // an approach similar to overshadowListeners in
     // https://github.com/sockjs/sockjs-node/blob/cf820c55af6a9953e16558555a31decea554f70e/src/utils.coffee
     _.each(['request', 'upgrade'], function(event) {
-      var httpServer = WebApp.httpServer;
+      var httpServer = self.httpServer;
       var oldHttpServerListeners = httpServer.listeners(event).slice(0);
       httpServer.removeAllListeners(event);
 
       // request and upgrade have different arguments passed but
       // we only care about the first one which is always request
-      var newListener = function(request /*, moreArguments */) {
+      var newListener = function(request /*, moreArguments */ ) {
         // Store arguments for use within the closure below
         var args = arguments;
-
         // Rewrite /websocket and /websocket/ urls to /sockjs/websocket while
         // preserving query string.
         var parsedUrl = url.parse(request.url);
-        if (parsedUrl.pathname === pathPrefix + '/websocket' ||
-            parsedUrl.pathname === pathPrefix + '/websocket/') {
+        if (parsedUrl.pathname === self.pathPrefix + '/websocket' ||
+          parsedUrl.pathname === self.pathPrefix + '/websocket/') {
           parsedUrl.pathname = self.prefix + '/websocket';
           request.url = url.format(parsedUrl);
         }

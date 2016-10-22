@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Default time interval (in milliseconds) to reset rate limit counters
 var DEFAULT_INTERVAL_TIME_IN_MILLISECONDS = 1000;
 // Default number of events allowed per time interval

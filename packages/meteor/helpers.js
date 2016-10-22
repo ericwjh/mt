@@ -13,7 +13,7 @@ if (typeof __meteor_runtime_config__ === 'object' &&
 
 // XXX find a better home for these? Ideally they would be _.get,
 // _.ensure, _.delete..
-
+var _ = require('underscore')
 _.extend(Meteor, {
   // _get(a,b,c,d) returns a[b][c][d], or else undefined if a[b] or
   // a[b][c] doesn't exist.

@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // This implementation of Min/Max-Heap is just a subclass of Max-Heap
 // with a Min-Heap as an encapsulated property.
 //

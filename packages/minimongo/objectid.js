@@ -1,3 +1,4 @@
+var _ =   require('underscore');
 // Is this selector just shorthand for lookup by _id?
 LocalCollection._selectorIsId = function (selector) {
   return (typeof selector === "string") ||

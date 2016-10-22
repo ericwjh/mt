@@ -1,6 +1,7 @@
+var _ =   require('underscore');
 var Future =   require('fibers/future');
 
-global.ObserveMultiplexer = function (options) {
+module.exports = global.ObserveMultiplexer = function (options) {
   var self = this;
 
   if (!options || !_.has(options, 'ordered'))

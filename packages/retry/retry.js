@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Retry logic with an exponential backoff.
 //
 // options:

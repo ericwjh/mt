@@ -1,21 +1,31 @@
 #Quick Start
 ```js
 // client
-require('mt/client')
-Meteor.call('hello', function(fruit){
-	console.log(fruit)
+var mt = require('mt/client')
+
+mt.subscribe('A')
+var fruits = new Mongo.Collection('fruit')
+
+Tracker.autorun(function(){
+  console.log(fruits.find().fetch()) // array of fruits
 })
 ```
 
 ```js
 // server
-var server = require('mt/server')
-var fruits = new Mongo.Collection('fruits')
-server.listen(8080, function(){
-	Meteor.methods({
-		hello: function(){
-			return fruits.findOne({})
-		}
-	})
+var mt = require('mt/server')
+var express = require('express')
+var app = express()
+var httpServer = http.createServer(app)
+mt.registerDDP(httpServer)
+
+var fruits = new Mongo.Collection('fruit')
+
+Meteor.publish('fruits', function() {
+	return fruits.find()
 })
+```
+
+```mongo shell
+db.fruits.insert({name:'apple'}) // client will update reactively
 ```

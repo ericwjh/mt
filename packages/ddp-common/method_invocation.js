@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Instance name is this because it is usually referred to as this inside a
 // method definition
 /**

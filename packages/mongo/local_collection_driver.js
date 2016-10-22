@@ -1,4 +1,5 @@
-global.LocalCollectionDriver = function () {
+var _ = require('underscore')
+var LocalCollectionDriver = function () {
   var self = this;
   self.noConnCollections = {};
 };

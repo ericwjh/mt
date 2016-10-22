@@ -1,3 +1,4 @@
+var _ = require('underscore')
 global.MinHeap = function (comparator, options) {
   var self = this;
   MaxHeap.call(self, function (a, b) {

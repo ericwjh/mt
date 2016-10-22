@@ -1,6 +1,6 @@
 // Rate Limiter built into DDP with a default error message. See README or
 // online documentation for more details.
-DDPRateLimiter = {};
+var DDPRateLimiter = module.exports = {};
 
 var errorMessage = function (rateLimitResult) {
   return "Error, too many requests. Please slow down. You must wait " +

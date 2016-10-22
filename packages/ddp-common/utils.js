@@ -1,3 +1,4 @@
+var _ = require('underscore')
 DDPCommon.SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
 
 DDPCommon.parseDDP = function (stringMessage) {

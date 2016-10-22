@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // A "crossbar" is a class that provides structured notification registration.
 // See _match for the definition of how a notification matches a trigger.
 // All notifications and triggers must have a string key named 'collection'.

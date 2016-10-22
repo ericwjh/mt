@@ -1,3 +1,5 @@
+var _ = require('underscore')
+var autopublish = true
 // options.connection, if given, is a LivedataClient or LivedataServer
 // XXX presently there is no way to destroy/clean up a Collection
 
@@ -5,7 +7,7 @@
  * @summary Namespace for MongoDB-related items
  * @namespace
  */
-global.Mongo = {};
+module.exports = global.Mongo = {};
 
 /**
  * @summary varructor for a Collection
@@ -82,16 +84,20 @@ Mongo.Collection = function (name, options) {
 
   self._transform = LocalCollection.wrapTransform(options.transform);
 
-  if (! name || options.connection === null)
-    // note: nameless collections never have a connection
+  // if (! name || options.connection === null)
+  if (! name) {
     self._connection = null;
-  else if (options.connection)
-    self._connection = options.connection;
-  else if (Meteor.isClient)
-    self._connection = Meteor.connection;
-  else
-    self._connection = Meteor.server;
+  }
 
+  else if (options.connection) {
+    self._connection = options.connection;
+  }
+  else if (Meteor.isClient){
+    self._connection = Meteor.connection;
+  }
+  else{
+    self._connection = Meteor.server;
+  }
   if (!options._driver) {
     // XXX This check assumes that webapp is loaded so that Meteor.server !==
     // null. We should fully support the case of "want to use a Mongo-backed
@@ -105,10 +111,10 @@ Mongo.Collection = function (name, options) {
       options._driver = LocalCollectionDriver;
     }
   }
+
   self._collection = options._driver.open(name, self._connection);
   self._name = name;
   self._driver = options._driver;
-
   if (self._connection && self._connection.registerStore) {
     // OK, we're going to be a slave, replicating some remote
     // database, except possibly with some temporary divergence while
@@ -235,18 +241,14 @@ Mongo.Collection = function (name, options) {
   // collection. Could be hard if the security rules are only defined on the
   // server.
   if (options.defineMutationMethods !== false) {
-    try {
       self._defineMutationMethods({ useExisting: (options._suppressSameNameError === true) });
-    } catch (error) {
       // Throw a more understandable error on the server for same collection name
       // if (error.message === "A method named '/"+name+"/insert' is already defined")
       //   throw new Error(`There is already a collection named "${name}"`);
-      throw error;
-    }
   }
 
   // autopublish
-  if (Package.autopublish && !options._preventAutopublish && self._connection
+  if (autopublish && !options._preventAutopublish && self._connection
       && self._connection.publish) {
     self._connection.publish(null, function () {
       return self.find();
@@ -514,7 +516,6 @@ Mongo.Collection.prototype.insert = function insert(doc, callback) {
     callback, chooseReturnValueFromCollectionResult);
 
   if (this._isRemoteCollection()) {
-    console.log('-_isRemoteCollection')
     var result = this._callMutatorMethod("insert", [doc], wrappedCallback);
     return chooseReturnValueFromCollectionResult(result);
   }

@@ -9,7 +9,7 @@ var hasOwn = class2type.hasOwnProperty;
 var support = {};
 
 // Populate the class2type map
-_.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function(name, i) {
+"Boolean Number String Function Array Date RegExp Object Error".split(" ").forEach(function(name, i) {
   class2type[ "[object " + name + "]" ] = name.toLowerCase();
 });
 

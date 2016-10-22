@@ -1,6 +1,7 @@
 var path =   require('path');
 var Fiber =   require('fibers');
 var Future =   require('fibers/future');
+var _ = require('underscore')
 
 Meteor._noYieldsAllowed = function (f) {
   var savedYield = Fiber.yield;

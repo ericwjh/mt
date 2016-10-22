@@ -1,6 +1,11 @@
+var _ = require('underscore')
+var Fiber =   require('fibers');
+var StreamServer = require('./stream_server.js')
+var DDPRateLimiter = require('../ddp-rate-limiter/ddp-rate-limiter.js')
 global.DDPServer = {};
 
-var Fiber =   require('fibers');
+require('./writefence.js')
+require('./crossbar.js')
 
 // This file contains classes:
 // * Session - The server's connection to a single DDP client
@@ -589,8 +594,8 @@ _.extend(Session.prototype, {
       // ddp-rate-limiter package. This is also done for weak requirements to
       // add the ddp-rate-limiter package in case we don't have Accounts. A
       // user trying to use the ddp-rate-limiter must explicitly require it.
-      if (Package['ddp-rate-limiter']) {
-        var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
+      // if (Package['ddp-rate-limiter']) {
+        // var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
         var rateLimiterInput = {
           userId: self.userId,
           clientAddress: self.connectionHandle.clientAddress,
@@ -611,7 +616,7 @@ _.extend(Session.prototype, {
           });
           return;
         }
-      }
+      // }
 
       var handler = self.server.publish_handlers[msg.name];
 
@@ -662,7 +667,7 @@ _.extend(Session.prototype, {
         self.send({
           msg: 'result', id: msg.id,
           // error: new Meteor.Error(404, `Method '${msg.method}' not found`)});
-          error: new Meteor.Error(404, "`Method '${msg.method}' not found`")});
+          error: new Meteor.Error(404, "`Method "+msg.method+" not found`")});
         fence.arm();
         return;
       }
@@ -679,34 +684,32 @@ _.extend(Session.prototype, {
         connection: self.connectionHandle,
         randomSeed: randomSeed
       });
+      const payload = {
+        msg: "result",
+        id: msg.id
+      };
 
-      const promise = new Promise(function(resolve, reject){
-        // XXX It'd be better if we could hook into method handlers better but
-        // for now, we need to check if the ddp-rate-limiter exists since we
-        // have a weak requirement for the ddp-rate-limiter package to be added
-        // to our application.
-        if (Package['ddp-rate-limiter']) {
-          var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
-          var rateLimiterInput = {
-            userId: self.userId,
-            clientAddress: self.connectionHandle.clientAddress,
-            type: "method",
-            name: msg.method,
-            connectionId: self.id
-          };
-          DDPRateLimiter._increment(rateLimiterInput);
-          var rateLimitResult = DDPRateLimiter._check(rateLimiterInput)
-          if (!rateLimitResult.allowed) {
-            reject(new Meteor.Error(
-              "too-many-requests",
-              DDPRateLimiter.getErrorMessage(rateLimitResult),
-              {timeToReset: rateLimitResult.timeToReset}
-            ));
-            return;
-          }
-        }
-
-        resolve(DDPServer._CurrentWriteFence.withValue(
+      var rateLimiterInput = {
+          userId: self.userId,
+          clientAddress: self.connectionHandle.clientAddress,
+          type: "method",
+          name: msg.method,
+          connectionId: self.id
+        };
+        DDPRateLimiter._increment(rateLimiterInput);
+        var rateLimitResult = DDPRateLimiter._check(rateLimiterInput)
+        if (!rateLimitResult.allowed) {
+          var exception =  (new Meteor.Error(
+            "too-many-requests",
+            DDPRateLimiter.getErrorMessage(rateLimitResult),
+            {timeToReset: rateLimitResult.timeToReset}
+          ));
+          payload.error = wrapInternalException(
+          exception,
+          "`while invoking method "+msg.method
+        );
+        } else{
+           var result = DDPServer._CurrentWriteFence.withValue(
           fence,
           function() {
             return DDP._CurrentInvocation.withValue(
@@ -717,33 +720,88 @@ _.extend(Session.prototype, {
                         )}
           )
           } 
-        ));
-      });
+        )
 
-      function finish() {
-            fence.arm();
+      
+        fence.arm();
         unblock();
-      }
-
-      const payload = {
-        msg: "result",
-        id: msg.id
-      };
-
-      promise.then(function(result) {
-        finish();
         if (result !== undefined) {
           payload.result = result;
         }
+        }
+
+     
         self.send(payload);
-      }, function(exception) {
-        finish();
-        payload.error = wrapInternalException(
-          exception,
-          "`while invoking method '${msg.method}'`"
-        );
-        self.send(payload);
-      });
+
+      // return
+
+      
+      // const promise = new Promise(function(resolve, reject){
+      //   // XXX It'd be better if we could hook into method handlers better but
+      //   // for now, we need to check if the ddp-rate-limiter exists since we
+      //   // have a weak requirement for the ddp-rate-limiter package to be added
+      //   // to our application.
+      //   // if (Package['ddp-rate-limiter']) {
+      //   //   var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
+          
+      //     var rateLimiterInput = {
+      //       userId: self.userId,
+      //       clientAddress: self.connectionHandle.clientAddress,
+      //       type: "method",
+      //       name: msg.method,
+      //       connectionId: self.id
+      //     };
+      //     DDPRateLimiter._increment(rateLimiterInput);
+      //     var rateLimitResult = DDPRateLimiter._check(rateLimiterInput)
+      //     if (!rateLimitResult.allowed) {
+      //       reject(new Meteor.Error(
+      //         "too-many-requests",
+      //         DDPRateLimiter.getErrorMessage(rateLimitResult),
+      //         {timeToReset: rateLimitResult.timeToReset}
+      //       ));
+      //       return;
+      //     }
+
+      //   // }
+
+      //   resolve(DDPServer._CurrentWriteFence.withValue(
+      //     fence,
+      //     function() {
+      //       return DDP._CurrentInvocation.withValue(
+      //       invocation,
+      //       function()  {return maybeAuditArgumentChecks(
+      //                     handler, invocation, msg.params,
+      //                     "call to '" + msg.method + "'"
+      //                   )}
+      //     )
+      //     } 
+      //   ));
+      // });
+
+      // function finish() {
+      //       fence.arm();
+      //   unblock();
+      // }
+
+      // const payload = {
+      //   msg: "result",
+      //   id: msg.id
+      // };
+      // promise.then(function(result) {
+      //   finish();
+      //   if (result !== undefined) {
+      //     payload.result = result;
+      //   }
+      //   self.send(payload);
+      // }, function(exception) {
+      //   console.log(exception)
+      //   finish();
+      //   payload.error = wrapInternalException(
+      //     exception,
+      //     "`while invoking method "+msg.method
+      //   );
+      //   self.send(payload);
+      // });
     }
   },
 
@@ -1299,7 +1357,7 @@ _.extend(Subscription.prototype, {
 /* Server                                                                     */
 /******************************************************************************/
 
-global.Server = function (options) {
+var Server = module.exports = function (app, options) {
   var self = this;
 
   // The default heartbeat interval is 30 seconds on the server and 35
@@ -1331,7 +1389,7 @@ global.Server = function (options) {
 
   self.sessions = {}; // map from id to session
 
-  self.stream_server = new StreamServer;
+  self.stream_server = new StreamServer(app);
 
   self.stream_server.register(function (socket) {
     // socket implements the SockJSConnection interface
@@ -1348,7 +1406,7 @@ global.Server = function (options) {
       if (Meteor._printReceivedDDP) {
         Meteor._debug("Received DDP", raw_msg);
       }
-      try {
+      // try {
         try {
           var msg = DDPCommon.parseDDP(raw_msg);
         } catch (err) {
@@ -1376,11 +1434,11 @@ global.Server = function (options) {
           return;
         }
         socket._meteorSession.processMessage(msg);
-      } catch (e) {
-        // XXX print stack nicely
-        Meteor._debug("Internal exception while processing message", msg,
-                      e.message, e.stack);
-      }
+      // } catch (e) {
+      //   // XXX print stack nicely
+      //   Meteor._debug("Internal exception while processing message", msg,
+      //                 e.message, e.stack);
+      // }
     });
 
     socket.on('close', function () {

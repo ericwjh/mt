@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Like _.isArray, but doesn't regard polyfilled Uint8Arrays on old browsers as
 // arrays.
 // XXX maybe this should be EJSON.isArray

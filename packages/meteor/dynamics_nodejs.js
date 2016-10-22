@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Fiber-aware implementation of dynamic scoping, for use on the server
 
 var Fiber =   require('fibers');

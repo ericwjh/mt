@@ -1,3 +1,4 @@
+var _ = require('underscore')
 if (Meteor.isServer) {
   var path =   require('path');
   var Fiber =   require('fibers');
@@ -852,7 +853,6 @@ _.extend(Connection.prototype, {
         // that stubs check() their arguments.
         var stubReturnValue = DDP._CurrentInvocation.withValue(invocation, function () {
           if (Meteor.isServer) {
-            console.log('asdfasdfef')
             // Because saveOriginals and retrieveOriginals aren't reentrant,
             // don't allow stubs to yield.
             return Meteor._noYieldsAllowed(function () {
@@ -860,7 +860,6 @@ _.extend(Connection.prototype, {
               return stub.apply(invocation, EJSON.clone(args));
             });
           } else {
-            console.log('asdf1231123123asdfef')
             return stub.apply(invocation, EJSON.clone(args));
           }
         });
@@ -1294,7 +1293,7 @@ _.extend(Connection.prototype, {
     if (self._bufferedWritesFlushHandle) {
       clearTimeout(self._bufferedWritesFlushHandle);
     }
-    self._bufferedWritesFlushHandle = setTimeout(self.__flushBufferedWrites,
+    self._bufferedWritesFlushHandle = setTimeout(self.__flushBufferedWrites.bind(self),
                                                       self._bufferedWritesInterval);
   },
 

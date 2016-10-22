@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // The minimongo selector compiler!
 
 // Terminology:

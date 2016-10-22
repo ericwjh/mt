@@ -1,3 +1,4 @@
+var _ = require('underscore')
 /**
  * @namespace
  * @summary Namespace for EJSON functions

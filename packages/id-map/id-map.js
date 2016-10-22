@@ -1,3 +1,4 @@
+var _ = require('underscore')
 global.IdMap = function (idStringify, idParse) {
   var self = this;
   self._map = {};

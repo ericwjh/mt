@@ -1,3 +1,4 @@
+var _ =   require('underscore');
 // XXX maybe move these into another ObserveHelpers package or something
 
 // _CachingChangeObserver is an object which receives observeChanges callbacks

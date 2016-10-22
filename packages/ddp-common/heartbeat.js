@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Heartbeat options:
 //   heartbeatInterval: interval to send pings, in milliseconds.
 //   heartbeatTimeout: timeout to close the connection if a reply isn't

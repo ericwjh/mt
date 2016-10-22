@@ -1,3 +1,5 @@
+var _ = require('underscore')
+
 // Constructor of Heap
 // - comparator - Function - given two items returns a number
 // - options:

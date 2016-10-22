@@ -1,3 +1,5 @@
+var MongoInternals =require('./mongo_driver.js')
+var _ =   require('underscore');
 MongoInternals.RemoteCollectionDriver = function (
   mongo_url, options) {
   var self = this;
@@ -31,10 +33,8 @@ MongoInternals.defaultRemoteCollectionDriver = _.once(function () {
   if (process.env.MONGO_OPLOG_URL) {
     connectionOptions.oplogUrl = process.env.MONGO_OPLOG_URL;
   }
-  console.log('mongoUrl',mongoUrl)
   if (! mongoUrl)
     throw new Error("MONGO_URL must be set in environment");
   var a = new MongoInternals.RemoteCollectionDriver(mongoUrl, connectionOptions);
-  console.log(a,'a')
   return a;//new MongoInternals.RemoteCollectionDriver(mongoUrl, connectionOptions);
 });

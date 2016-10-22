@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // XXX docs
 
 // Things we explicitly do NOT support:

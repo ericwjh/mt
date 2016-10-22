@@ -1,6 +1,8 @@
+var _ = require('underscore')
+var DDP = require('../ddp-client/namespace')
 var withoutInvocation = function (f) {
   if (Package.ddp) {
-    var _CurrentInvocation = Package.ddp.DDP._CurrentInvocation;
+    var _CurrentInvocation = DDP._CurrentInvocation;
     if (_CurrentInvocation.get() && _CurrentInvocation.get().isSimulation)
       throw new Error("Can't set timers inside simulations");
     return function () { _CurrentInvocation.withValue(null, f); };

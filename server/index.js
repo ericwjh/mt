@@ -1,20 +1,20 @@
 var Fiber = require("fibers")
 
-global.__meteor_bootstrap__ = {
-	// startupHooks: [],
-	// serverDir: __dirname,
-	// configJson: {
-	// 	clientPaths: []
-	// }
-}
+// global.__meteor_bootstrap__ = {
+// 	// startupHooks: [],
+// 	// serverDir: __dirname,
+// 	// configJson: {
+// 	// 	clientPaths: []
+// 	// }
+// }
 
-global.__meteor_runtime_config__ = {}
-	// require('../packages/underscore.js')
+// global.__meteor_runtime_config__ = {}
+// 	// require('../packages/underscore.js')
 global.Package = {}
-global._ = require('underscore')
-Package.underscore = {
-		_: global._
-	}
+// global._ = require('underscore')
+// Package.underscore = {
+// 		_: global._
+// 	}
 	// require('../packages/underscore/pre.js')
 	// require('../packages/underscore/underscore.js')
 	// require('../packages/underscore/post.js')
@@ -112,7 +112,8 @@ require('../packages/diff-sequence/diff.js')
 // require('./packages-built/mongo-id.js')
 require('../packages/mongo-id/id.js')
 
-require('../packages/routepolicy/routepolicy.js')
+// require('../packages/routepolicy/routepolicy.js')
+
 	// require('./packages-built/ddp-client.js')
 require('../packages/ddp-client/namespace.js')
 require('../packages/ddp-client/id_map.js')
@@ -181,12 +182,7 @@ require('../packages/observe-sequence/observe_sequence.js')
 // require('../packages/boilerplate-generator.js')
 // require('../packages/boilerplate-generator/boilerplate-generator.js')
 
-// require('../packages/webapp-hashing.js')
-// require('../packages/webapp-hashing/webapp-hashing.js')
 
-// require('../packages/webapp.js')
-// require('../packages/webapp/webapp_server.js')
-require('./webapp.js')
 
 // require('./packages-built/ordered-dict.js')
 // require('../packages/ordered-dict/ordered_dict.js')
@@ -211,69 +207,74 @@ require('../packages/minimongo/selector_projection.js')
 require('../packages/minimongo/selector_modifier.js')
 require('../packages/minimongo/sorter_projection.js')
 
-// require('./packages-built/ddp-server.js')
-require('../packages/ddp-server/stream_server.js')
-require('../packages/ddp-server/livedata_server.js')
-require('../packages/ddp-server/writefence.js')
-require('../packages/ddp-server/crossbar.js')
-require('../packages/ddp-server/server_convenience.js')
+module.exports = {
+	registerDDP: function(httpServer){
+		// require('./packages-built/ddp-server.js')
+		// require('../packages/ddp-server/stream_server.js')
+		// require('../packages/ddp-server/livedata_server.js')
+		// require('../packages/ddp-server/writefence.js')
+		// require('../packages/ddp-server/crossbar.js')
+		require('../packages/ddp-server/server_convenience.js')(httpServer)
 
-// require('../packages/ddp.js')
+		// require('../packages/ddp.js')
 
+		
+		
+	}
+}
 // require('../packages/npm-mongo.js')
-// require('../packages/npm-mongo/wrapper.js')
-// global.NpmModuleMongodb = require('mongodb');
-// global.NpmModuleMongodbVersion = require('mongodb/package.json').version
+		// require('../packages/npm-mongo/wrapper.js')
+		// global.NpmModuleMongodb = require('mongodb');
+		// global.NpmModuleMongodbVersion = require('mongodb/package.json').version
 
-// require('../packages/allow-deny.js')
-require('../client/allow-deny.js')
-	// require('../packages/allow-deny/allow-deny.js')
+		// require('../packages/allow-deny.js')
+		require('../client/allow-deny.js')
+			// require('../packages/allow-deny/allow-deny.js')
 
-// require('./packages-built/binary-heap.js')
-require('../packages/binary-heap/max-heap.js')
-require('../packages/binary-heap/min-heap.js')
-require('../packages/binary-heap/min-max-heap.js')
+		// require('./packages-built/binary-heap.js')
+		require('../packages/binary-heap/max-heap.js')
+		require('../packages/binary-heap/min-heap.js')
+		require('../packages/binary-heap/min-max-heap.js')
 
-// require('./packages-built/mongo.js')
-// require('../packages/mongo/mongo_driver.js')
-// require('../packages/mongo/oplog_tailing.js')
-// require('../packages/mongo/observe_multiplex.js')
-// require('../packages/mongo/doc_fetcher.js')
-// require('../packages/mongo/polling_observe_driver.js')
-// require('../packages/mongo/oplog_observe_driver.js')
-require('../packages/mongo/local_collection_driver.js')
-	// // global.LocalCollectionDriver = LocalCollectionDriver
-	// // console.log(LocalCollectionDriver)
-	// require('../packages/mongo/remote_collection_driver.js')
-	// global.MongoID=Package['mongo-id'].MongoID
-	// 	global.LocalCollection = Package.minimongo.LocalCollection;
-	// global.Random = Package.random.Random;
-	// global.EJSON = Package.ejson.EJSON;
-	// var _ = Package.underscore._;
-	// var Minimongo = Package.minimongo.Minimongo;
-	// var DDP = Package['ddp-client'].DDP;
-	// global.DDPServer = Package['ddp-server'].DDPServer;
-	// var Tracker = Package.tracker.Tracker;
-	// var Deps = Package.tracker.Deps;
-	// var DiffSequence = Package['diff-sequence'].DiffSequence;
-	// var MongoID = Package['mongo-id'].MongoID;
-	// var check = Package.check.check;
-	// var Match = Package.check.Match;
-	// var ECMAScript = Package.ecmascript.ECMAScript;
-	// var MaxHeap = Package['binary-heap'].MaxHeap;
-	// var MinHeap = Package['binary-heap'].MinHeap;
-	// var MinMaxHeap = Package['binary-heap'].MinMaxHeap;
-	// global.Hook = Package['callback-hook'].Hook;
+		// require('./packages-built/mongo.js')
+		// require('../packages/mongo/mongo_driver.js')
+		// require('../packages/mongo/oplog_tailing.js')
+		// require('../packages/mongo/observe_multiplex.js')
+		// require('../packages/mongo/doc_fetcher.js')
+		// require('../packages/mongo/polling_observe_driver.js')
+		// require('../packages/mongo/oplog_observe_driver.js')
+		require('../packages/mongo/local_collection_driver.js')
+			// // global.LocalCollectionDriver = LocalCollectionDriver
+			// // console.log(LocalCollectionDriver)
+			require('../packages/mongo/remote_collection_driver.js')
+			// global.MongoID=Package['mongo-id'].MongoID
+			// 	global.LocalCollection = Package.minimongo.LocalCollection;
+			// global.Random = Package.random.Random;
+			// global.EJSON = Package.ejson.EJSON;
+			// var _ = Package.underscore._;
+			// var Minimongo = Package.minimongo.Minimongo;
+			// var DDP = Package['ddp-client'].DDP;
+			// global.DDPServer = Package['ddp-server'].DDPServer;
+			// var Tracker = Package.tracker.Tracker;
+			// var Deps = Package.tracker.Deps;
+			// var DiffSequence = Package['diff-sequence'].DiffSequence;
+			// var MongoID = Package['mongo-id'].MongoID;
+			// var check = Package.check.check;
+			// var Match = Package.check.Match;
+			// var ECMAScript = Package.ecmascript.ECMAScript;
+			// var MaxHeap = Package['binary-heap'].MaxHeap;
+			// var MinHeap = Package['binary-heap'].MinHeap;
+			// var MinMaxHeap = Package['binary-heap'].MinMaxHeap;
+			// global.Hook = Package['callback-hook'].Hook;
 require('../packages/mongo/collection.js')
-	// // global.Mongo = Mongo
-	// global.Mongo = {
-	// 	Collection : function(){
+			// // global.Mongo = Mongo
+			// global.Mongo = {
+			// 	Collection : function(){
 
-// 	}
-// }
+		// 	}
+		// }
 
-// Mongo.Collection.prototype.insert = function(a){console.log(a)}
-
+		// Mongo.Collection.prototype.insert = function(a){console.log(a)}
 // require('../packages/accounts-base.js')
 // require('../packages/accounts-base/server_main.js')
 // require('../packages/accounts-base/accounts_common.js')
@@ -328,16 +329,22 @@ require('../packages/mongo/collection.js')
 // require('../../main_server.js')
 
 // require('../packages/service-configuration')
-module.exports = function(port, cb) {
-	Fiber(function() {
+// require('../packages/webapp-hashing.js')
+// require('../packages/webapp-hashing/webapp-hashing.js')
 
-		if (port)
-			Package.webapp.WebApp.httpServer.listen(port, '0.0.0.0', function() {
-				console.log('listen on', process.env.PORT)
-			})
-		cb(Package.webapp.WebApp)
-	}).run();
-}
+// require('../packages/webapp.js')
+// require('../packages/webapp/webapp_server.js')
+// require('./webapp.js')
+// module.exports = function(port, cb) {
+// 	Fiber(function() {
+
+// 		if (port)
+// 			Package.webapp.WebApp.httpServer.listen(port, '0.0.0.0', function() {
+// 				console.log('listen on', process.env.PORT)
+// 			})
+// 		cb(Package.webapp.WebApp)
+// 	}).run();
+// }
 
 
 process.on('SIGINT', function() {

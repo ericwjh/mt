@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // RandomStream allows for generation of pseudo-random values, from a seed.
 //
 // We use this for consistent 'random' numbers across the client and server.

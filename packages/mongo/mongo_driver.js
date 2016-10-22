@@ -6,13 +6,15 @@
  * NOTE: the public API methods must be run within a fiber. If you call
  * these outside of a fiber they will explode!
  */
+var _ =   require('underscore');
 
 var path =   require('path');
 var MongoDB = require('mongodb');
 var Fiber =   require('fibers');
 var Future =   require('fibers/future');
-
-global.MongoInternals = {};
+var ObserveMultiplexer = require('./observe_multiplex.js')
+var PollingObserveDriver = require('./polling_observe_driver.js')
+module.exports = global.MongoInternals = {};
 global.MongoTest = {};
 
 // MongoInternals.NpmModules = {

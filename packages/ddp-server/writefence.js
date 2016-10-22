@@ -1,3 +1,4 @@
+var _ = require('underscore')
 var path =   require('path');
 var Future =   require('fibers/future');
 
