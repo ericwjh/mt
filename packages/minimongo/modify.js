@@ -1,3 +1,5 @@
+var _ = require('underscore')
+var EJSON = require('../ejson/ejson')
 // XXX need a strategy for passing the binding of $ into this
 // function, from the compiled selector
 //

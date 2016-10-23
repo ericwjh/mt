@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // Simple implementation of dynamic scoping, for use in browsers
 
 var nextSlot = 0;

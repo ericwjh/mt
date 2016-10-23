@@ -106,7 +106,7 @@ _.extend(Rule.prototype, {
 });
 
 // Initialize rules to be an empty dictionary.
-global.RateLimiter = function () {
+var RateLimiter = function () {
   var self = this;
 
   // Dictionary of all rules associated with this RateLimiter, keyed by their
@@ -114,7 +114,6 @@ global.RateLimiter = function () {
   // last reset time and the rule reset interval in milliseconds.
   self.rules = {};
 };
-
 /**
  * Checks if this input has exceeded any rate limits.
  * @param  {object} input dictionary containing key-value pairs of attributes
@@ -254,3 +253,4 @@ RateLimiter.prototype.removeRule = function (id) {
     return false;
   }
 };
+module.exports = new RateLimiter

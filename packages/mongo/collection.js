@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var MongoID = require('../mongo-id/id.js')
 var autopublish = true
 // options.connection, if given, is a LivedataClient or LivedataServer
 // XXX presently there is no way to destroy/clean up a Collection
@@ -7,7 +8,7 @@ var autopublish = true
  * @summary Namespace for MongoDB-related items
  * @namespace
  */
-module.exports = global.Mongo = {};
+var Mongo = {};
 
 /**
  * @summary varructor for a Collection
@@ -26,7 +27,7 @@ The default id generation technique is `'STRING'`.
  * @param {Function} options.transform An optional transformation function. Documents will be passed through this function before being returned from `fetch` or `findOne`, and before being passed to callbacks of `observe`, `map`, `forEach`, `allow`, and `deny`. Transforms are *not* applied for the callbacks of `observeChanges` or to cursors returned from publish functions.
  * @param {Boolean} options.defineMutationMethods Set to `false` to skip setting up the mutation methods that enable insert/update/remove from client code. Default `true`.
  */
-Mongo.Collection = function (name, options) {
+module.exports = Mongo.Collection = function (name, options) {
   var self = this;
   if (! (self instanceof Mongo.Collection))
     throw new Error('use "new" to varruct a Mongo.Collection');

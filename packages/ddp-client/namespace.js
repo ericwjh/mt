@@ -3,6 +3,6 @@
  * @summary Namespace for DDP-related methods/classes.
  */
 global.DDP          = {};
-global.LivedataTest = {};
+// global.LivedataTest = {};
 
 module.exports= DDP

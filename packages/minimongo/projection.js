@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var EJSON = require('../ejson/ejson')
 // Knows how to compile a fields projection to a predicate function.
 // @returns - Function: a closure that filters out an object according to the
 //            fields projection rules:

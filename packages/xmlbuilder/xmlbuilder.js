@@ -1,2 +1,0 @@
-XmlBuilder =   require('xmlbuilder');
-

@@ -1,5 +1,6 @@
 var _ =   require('underscore');
 var Future =   require('fibers/future');
+var EJSON =   require('../ejson/ejson');
 
 module.exports = global.ObserveMultiplexer = function (options) {
   var self = this;

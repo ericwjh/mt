@@ -1,3 +1,5 @@
+var MongoID = require('../mongo-id/id')
+var EJSON = require('../ejson/ejson')
 var _ =   require('underscore');
 // XXX maybe move these into another ObserveHelpers package or something
 

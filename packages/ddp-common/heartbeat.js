@@ -6,7 +6,7 @@ var _ = require('underscore')
 //   sendPing: function to call to send a ping on the connection.
 //   onTimeout: function to call to close the connection.
 
-DDPCommon.Heartbeat = function (options) {
+var Heartbeat = function (options) {
   var self = this;
 
   self.heartbeatInterval = options.heartbeatInterval;
@@ -18,8 +18,9 @@ DDPCommon.Heartbeat = function (options) {
   self._heartbeatIntervalHandle = null;
   self._heartbeatTimeoutHandle = null;
 };
+module.exports = Heartbeat
 
-_.extend(DDPCommon.Heartbeat.prototype, {
+_.extend(Heartbeat.prototype, {
   stop: function () {
     var self = this;
     self._clearHeartbeatIntervalTimer();

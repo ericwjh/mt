@@ -1,4 +1,5 @@
 var _ =   require('underscore');
+var MongoID = require('../mongo-id/id.js')
 // Is this selector just shorthand for lookup by _id?
 LocalCollection._selectorIsId = function (selector) {
   return (typeof selector === "string") ||

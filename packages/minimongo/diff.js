@@ -1,3 +1,4 @@
+var DiffSequence = require('../diff-sequence/diff.js');	
 // ordered: bool.
 // old_results and new_results: collections of documents.
 //    if ordered, they are arrays.

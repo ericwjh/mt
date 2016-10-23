@@ -14,8 +14,13 @@ var Fiber =   require('fibers');
 var Future =   require('fibers/future');
 var ObserveMultiplexer = require('./observe_multiplex.js')
 var PollingObserveDriver = require('./polling_observe_driver.js')
-module.exports = global.MongoInternals = {};
-global.MongoTest = {};
+var EJSON = require('../ejson/ejson.js')
+var Collection = require('./collection.js')
+var MongoID = require('../mongo-id/id.js')
+var Hook = require('../callback-hook/hook');
+var MongoInternals = {};
+module.exports = MongoInternals
+// global.MongoTest = {};
 
 // MongoInternals.NpmModules = {
 //   mongodb: {
@@ -63,7 +68,7 @@ var replaceMongoAtomWithMeteor = function (document) {
     return new Uint8Array(buffer);
   }
   if (document instanceof MongoDB.ObjectID) {
-    return new Mongo.ObjectID(document.toHexString());
+    return new MongoID.ObjectID(document.toHexString());
   }
   if (document["EJSON$type"] && document["EJSON$value"]
       && _.size(document) === 2) {
@@ -86,7 +91,7 @@ var replaceMeteorAtomWithMongo = function (document) {
     // serialize it correctly).
     return new MongoDB.Binary(new Buffer(document));
   }
-  if (document instanceof Mongo.ObjectID) {
+  if (document instanceof MongoID.ObjectID ) {
     return new MongoDB.ObjectID(document.toHexString());
   }
   if (document instanceof MongoDB.Timestamp) {
@@ -392,15 +397,7 @@ MongoConnection.prototype._refresh = function (collectionName, selector) {
 MongoConnection.prototype._remove = function (collection_name, selector,
                                               callback) {
   var self = this;
-
-  if (collection_name === "___meteor_failure_test_collection") {
-    var e = new Error("Failure test");
-    e.expected = true;
-    if (callback)
-      return callback(e);
-    else
-      throw e;
-  }
+  console.log(selector)
 
   var write = self._maybeBeginWrite();
   var refresh = function () {
@@ -816,7 +813,7 @@ MongoConnection.prototype._dropIndex = function (collectionName, index) {
 // which includes fully-synchronous versions of forEach, etc.
 //
 // Cursor is the cursor object returned from find(), which implements the
-// documented Mongo.Collection cursor API.  It wraps a CursorDescription and a
+// documented Collection cursor API.  It wraps a CursorDescription and a
 // SynchronousCursor (lazily: it doesn't contact Mongo until you call a method
 // like fetch or forEach on it).
 //
@@ -838,7 +835,7 @@ MongoConnection.prototype._dropIndex = function (collectionName, index) {
 global.CursorDescription = function (collectionName, selector, options) {
   var self = this;
   self.collectionName = collectionName;
-  self.selector = Mongo.Collection._rewriteSelector(selector);
+  self.selector = Collection._rewriteSelector(selector);
   self.options = options || {};
 };
 
@@ -891,7 +888,7 @@ Cursor.prototype.getTransform = function () {
 Cursor.prototype._publishCursor = function (sub) {
   var self = this;
   var collection = self._cursorDescription.collectionName;
-  return Mongo.Collection._publishCursor(self, sub, collection);
+  return Collection._publishCursor(self, sub, collection);
 };
 
 // Used to guarantee that publish functions return at most one cursor per

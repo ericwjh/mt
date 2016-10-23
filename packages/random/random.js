@@ -269,18 +269,18 @@ function createAleaGeneratorWithGeneratedSeed() {
 };
 
 if (Meteor.isServer) {
-  global.Random = new RandomGenerator(RandomGenerator.Type.NODE_CRYPTO);
+  var Random = new RandomGenerator(RandomGenerator.Type.NODE_CRYPTO);
 } else {
   if (typeof window !== "undefined" && window.crypto &&
       window.crypto.getRandomValues) {
-    global.Random = new RandomGenerator(RandomGenerator.Type.BROWSER_CRYPTO);
+  var Random = new RandomGenerator(RandomGenerator.Type.BROWSER_CRYPTO);
   } else {
     // On IE 10 and below, there's no browser crypto API
     // available. Fall back to Alea
     //
     // XXX looks like at the moment, we use Alea in IE 11 as well,
     // which has `window.msCrypto` instead of `window.crypto`.
-   global.Random = createAleaGeneratorWithGeneratedSeed();
+  var Random = createAleaGeneratorWithGeneratedSeed();
   }
 }
 
@@ -297,3 +297,4 @@ Random.createWithSeeds = function () {
 // Used like `Random`, but much faster and not cryptographically
 // secure
 Random.insecure = createAleaGeneratorWithGeneratedSeed();
+module.exports = Random

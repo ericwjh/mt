@@ -7,7 +7,7 @@ var _ = require('underscore')
  * @param {Object} options
  * @instanceName this
  */
-DDPCommon.MethodInvocation = function (options) {
+var MethodInvocation = function (options) {
   var self = this;
 
   // true if we're running not the actual method, but a stub (that is,
@@ -67,7 +67,7 @@ DDPCommon.MethodInvocation = function (options) {
   this.randomStream = null;
 };
 
-_.extend(DDPCommon.MethodInvocation.prototype, {
+_.extend(MethodInvocation.prototype, {
   /**
    * @summary Call inside a method invocation.  Allow subsequent method from this client to begin running in a new fiber.
    * @locus Server
@@ -96,3 +96,4 @@ _.extend(DDPCommon.MethodInvocation.prototype, {
   }
 });
 
+module.exports = MethodInvocation

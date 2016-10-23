@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var Random = require('../random/random')
 // Retry logic with an exponential backoff.
 //
 // options:
@@ -9,7 +10,7 @@ var _ = require('underscore')
 //  minTimeout: time to wait for the first `minCount` retries (ms).
 //  fuzz: factor to randomize retry times by (to avoid retry storms).
 
-global.Retry = function (options) {
+var Retry = function (options) {
   var self = this;
   _.extend(self, _.defaults(_.clone(options || {}), {
     baseTimeout: 1000, // 1 second
@@ -23,7 +24,7 @@ global.Retry = function (options) {
   }));
   self.retryTimer = null;
 };
-
+module.exports = Retry
 _.extend(Retry.prototype, {
 
   // Reset a pending retry, if any.
@@ -58,7 +59,7 @@ _.extend(Retry.prototype, {
     var timeout = self._timeout(count);
     if (self.retryTimer)
       clearTimeout(self.retryTimer);
-    self.retryTimer = Meteor.setTimeout(fn, timeout);
+    self.retryTimer = setTimeout(fn, timeout);
     return timeout;
   }
 

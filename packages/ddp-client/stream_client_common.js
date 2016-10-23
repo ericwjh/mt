@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var Retry = require('../retry/retry')
 // XXX from Underscore.String (http://epeli.github.com/underscore.string/)
 var startsWith = function(str, starts) {
   return str.length >= starts.length &&

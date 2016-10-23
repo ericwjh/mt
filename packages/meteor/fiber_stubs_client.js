@@ -1,3 +1,4 @@
+var _ = require('underscore')
 // This file is a partial analogue to fiber_helpers.js, which allows the client
 // to use a queue too, and also to call noYieldsAllowed.
 

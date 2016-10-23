@@ -1,3 +1,5 @@
+var MongoID = require('../mongo-id/id.js')
+
 var warn = function () {
   if (ObserveSequence._suppressWarnings) {
     ObserveSequence._suppressWarnings--;
@@ -12,7 +14,7 @@ var warn = function () {
 var idStringify = MongoID.idStringify;
 var idParse = MongoID.idParse;
 
-global.ObserveSequence = {
+var ObserveSequence = {
   _suppressWarnings: 0,
   _loggedWarnings: 0,
 
@@ -276,11 +278,11 @@ var diffArray = function (lastSeqArray, seqArray, callbacks) {
   });
 };
 
-global.seqChangedToEmpty = function (lastSeqArray, callbacks) {
+var seqChangedToEmpty = function (lastSeqArray, callbacks) {
   return [];
 };
 
-global.seqChangedToArray = function (lastSeqArray, array, callbacks) {
+var seqChangedToArray = function (lastSeqArray, array, callbacks) {
   var idsUsed = {};
   var seqArray = _.map(array, function (item, index) {
     var id;
@@ -313,7 +315,7 @@ global.seqChangedToArray = function (lastSeqArray, array, callbacks) {
   return seqArray;
 };
 
-global.seqChangedToCursor = function (lastSeqArray, cursor, callbacks) {
+var seqChangedToCursor = function (lastSeqArray, cursor, callbacks) {
   var initial = true; // are we observing initial data from cursor?
   var seqArray = [];
 
@@ -345,3 +347,4 @@ global.seqChangedToCursor = function (lastSeqArray, cursor, callbacks) {
 
   return [seqArray, observeHandle];
 };
+module.exports = ObserveSequence

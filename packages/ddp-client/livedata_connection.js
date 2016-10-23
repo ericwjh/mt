@@ -1,4 +1,12 @@
 var _ = require('underscore')
+var Random = require('../random/random.js')
+var Tracker = require('../tracker/tracker.js')
+var stringifyDDP = require('../ddp-common/utils').stringifyDDP
+var parseDDP = require('../ddp-common/utils').parseDDP
+var MethodInvocation =  require('../ddp-common/method_invocation')
+var DDPCommon =  require('../ddp-common')
+var EJSON = require('../ejson/ejson.js')
+var MongoID = require('../mongo-id/id.js')
 if (Meteor.isServer) {
   var path =   require('path');
   var Fiber =   require('fibers');
@@ -37,7 +45,6 @@ var Connection = function (url, options) {
     npmFayeOptions: {},
     // These options are only for testing.
     reloadWithOutstanding: false,
-    supportedDDPVersions: DDPCommon.SUPPORTED_DDP_VERSIONS,
     retry: true,
     respondToPings: true,
     // When updates are coming within this ms interval, batch them together.
@@ -223,12 +230,7 @@ var Connection = function (url, options) {
   }
 
   var onMessage = function (raw_msg) {
-    try {
-      var msg = DDPCommon.parseDDP(raw_msg);
-    } catch (e) {
-      Meteor._debug("Exception while parsing DDP", e);
-      return;
-    }
+      var msg = parseDDP(raw_msg)
 
     // Any message counts as receiving a pong, as it demonstrates that
     // the server is still alive.
@@ -286,9 +288,9 @@ var Connection = function (url, options) {
     var msg = {msg: 'connect'};
     if (self._lastSessionId)
       msg.session = self._lastSessionId;
-    msg.version = self._versionSuggestion || self._supportedDDPVersions[0];
-    self._versionSuggestion = msg.version;
-    msg.support = self._supportedDDPVersions;
+    // msg.version = self._versionSuggestion || self._supportedDDPVersions[0];
+    // self._versionSuggestion = msg.version;
+    // msg.support = self._supportedDDPVersions;
     self._send(msg);
 
     // Mark non-retry calls as failed. This has to be done early as getting these methods out of the
@@ -838,7 +840,7 @@ _.extend(Connection.prototype, {
         self.setUserId(userId);
       };
 
-      var invocation = new DDPCommon.MethodInvocation({
+      var invocation = new MethodInvocation({
         isSimulation: true,
         userId: self.userId(),
         setUserId: setUserId,
@@ -848,7 +850,7 @@ _.extend(Connection.prototype, {
       if (!alreadyInSimulation)
         self._saveOriginals();
 
-      try {
+      // try {
         // Note that unlike in the corresponding server code, we never audit
         // that stubs check() their arguments.
         var stubReturnValue = DDP._CurrentInvocation.withValue(invocation, function () {
@@ -863,10 +865,10 @@ _.extend(Connection.prototype, {
             return stub.apply(invocation, EJSON.clone(args));
           }
         });
-      }
-      catch (e) {
-        var exception = e;
-      }
+      // }
+      // catch (e) {
+      //   var exception = e;
+      // }
 
       if (!alreadyInSimulation)
         self._retrieveAndStoreOriginals(methodId());
@@ -875,15 +877,15 @@ _.extend(Connection.prototype, {
     // If we're in a simulation, stop and return the result we have,
     // rather than going on to do an RPC. If there was no stub,
     // we'll end up returning undefined.
-    if (alreadyInSimulation) {
-      if (callback) {
-        callback(exception, stubReturnValue);
-        return undefined;
-      }
-      if (exception)
-        throw exception;
-      return stubReturnValue;
-    }
+    // if (alreadyInSimulation) {
+    //   if (callback) {
+    //     callback(exception, stubReturnValue);
+    //     return undefined;
+    //   }
+    //   if (exception)
+    //     throw exception;
+    //   return stubReturnValue;
+    // }
 
     // If an exception occurred in a stub, and we're ignoring it
     // because we're doing an RPC and want to use what the server
@@ -892,14 +894,14 @@ _.extend(Connection.prototype, {
     //
     // Tests can set the 'expected' flag on an exception so it won't
     // go to log.
-    if (exception) {
-      if (options.throwStubExceptions) {
-        throw exception;
-      } else if (!exception.expected) {
-        Meteor._debug("Exception while simulating the effect of invoking '" +
-          name + "'", exception, exception.stack);
-      }
-    }
+    // if (exception) {
+    //   if (options.throwStubExceptions) {
+    //     throw exception;
+    //   } else if (!exception.expected) {
+    //     Meteor._debug("Exception while simulating the effect of invoking '" +
+    //       name + "'", exception, exception.stack);
+    //   }
+    // }
 
 
     // At this point we're definitely doing an RPC, and we're going to
@@ -1039,7 +1041,7 @@ _.extend(Connection.prototype, {
   // Sends the DDP stringification of the given message object
   _send: function (obj) {
     var self = this;
-    self._stream.send(DDPCommon.stringifyDDP(obj));
+    self._stream.send(stringifyDDP(obj));
   },
 
   // We detected via DDP-level heartbeats that we've lost the

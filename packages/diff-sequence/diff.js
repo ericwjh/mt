@@ -1,5 +1,7 @@
-global.DiffSequence = {};
-
+var _ = require('underscore')
+var EJSON = require('../ejson/ejson.js')
+var DiffSequence = {};
+module.exports = DiffSequence
 // ordered: bool.
 // old_results and new_results: collections of documents.
 //    if ordered, they are arrays.

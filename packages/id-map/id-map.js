@@ -1,11 +1,11 @@
 var _ = require('underscore')
-global.IdMap = function (idStringify, idParse) {
+var IdMap = function (idStringify, idParse) {
   var self = this;
   self._map = {};
   self._idStringify = idStringify || JSON.stringify;
   self._idParse = idParse || JSON.parse;
 };
-
+module.exports = IdMap 
 // Some of these methods are designed to match methods on OrderedDict, since
 // (eg) ObserveMultiplex and _CachingChangeObserver use them interchangeably.
 // (Conceivably, this should be replaced with "UnorderedDict" with a specific

@@ -1,4 +1,6 @@
 var _ = require('underscore')
+var EJSON = require('../ejson/ejson.js')
+var MongoID = require('../mongo-id/id.js')
 // The minimongo selector compiler!
 
 // Terminology:

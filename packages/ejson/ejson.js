@@ -1,12 +1,13 @@
 var _ = require('underscore')
+var Base64 = require('./base64.js')
 /**
  * @namespace
  * @summary Namespace for EJSON functions
  */
-global.EJSON = {};
-global.EJSONTest = {};
+var EJSON = {};
+// global.EJSONTest = {};
 
-
+module.exports = EJSON
 
 // Custom type interface definition
 /**

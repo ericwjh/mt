@@ -1,4 +1,6 @@
 var _ = require('underscore')
+var EJSON = require('../ejson/ejson')
+var DiffSequence = require('../diff-sequence/diff')
 // XXX type checking on selectors (graceful error if malformed)
 
 // LocalCollection: a set of documents that supports queries and modifiers.
@@ -34,7 +36,7 @@ global.LocalCollection = function (name) {
   // True when observers are paused and we should not send callbacks.
   self.paused = false;
 };
-
+module.exports = LocalCollection
 global.Minimongo = {};
 
 // Object exported only for unit testing.

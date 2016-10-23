@@ -1,9 +1,17 @@
 var _ = require('underscore')
 var Fiber =   require('fibers');
 var StreamServer = require('./stream_server.js')
-var DDPRateLimiter = require('../ddp-rate-limiter/ddp-rate-limiter.js')
-global.DDPServer = {};
-
+var RateLimiter = require('../rate-limit/rate-limit.js')
+var Random = require('../random/random.js')
+var stringifyDDP = require('../ddp-common/utils').stringifyDDP
+var parseDDP = require('../ddp-common/utils').parseDDP
+var  DDPCommon = require('../ddp-common/index.js')
+var MongoID = require('../mongo-id/id.js')
+var EJSON = require('../ejson/ejson.js')
+var Hook = require('../callback-hook/hook');
+var DDPServer = {};
+module.exports = DDPServer
+global.DDPServer = DDPServer
 require('./writefence.js')
 require('./crossbar.js')
 
@@ -229,12 +237,11 @@ _.extend(SessionCollectionView.prototype, {
 /* Session                                                                    */
 /******************************************************************************/
 
-var Session = function (server, version, socket, options) {
+var Session = function (server, socket, options) {
   var self = this;
   self.id = Random.id();
 
   self.server = server;
-  self.version = version;
 
   self.initialized = false;
   self.socket = socket;
@@ -306,22 +313,22 @@ var Session = function (server, version, socket, options) {
     self.startUniversalSubs();
   }).run();
 
-  if (version !== 'pre1' && options.heartbeatInterval !== 0) {
-    self.heartbeat = new DDPCommon.Heartbeat({
-      heartbeatInterval: options.heartbeatInterval,
-      heartbeatTimeout: options.heartbeatTimeout,
-      onTimeout: function () {
-        self.close();
-      },
-      sendPing: function () {
-        self.send({msg: 'ping'});
-      }
-    });
-    self.heartbeat.start();
-  }
+  // if (version !== 'pre1' && options.heartbeatInterval !== 0) {
+  //   self.heartbeat = new DDPCommon.Heartbeat({
+  //     heartbeatInterval: options.heartbeatInterval,
+  //     heartbeatTimeout: options.heartbeatTimeout,
+  //     onTimeout: function () {
+  //       self.close();
+  //     },
+  //     sendPing: function () {
+  //       self.send({msg: 'ping'});
+  //     }
+  //   });
+  //   self.heartbeat.start();
+  // }
 
-  Package.facts && Package.facts.Facts.incrementServerFact(
-    "livedata", "sessions", 1);
+  // Package.facts && Package.facts.Facts.incrementServerFact(
+  //   "livedata", "sessions", 1);
 };
 
 _.extend(Session.prototype, {
@@ -467,9 +474,8 @@ _.extend(Session.prototype, {
   send: function (msg) {
     var self = this;
     if (self.socket) {
-      if (Meteor._printSentDDP)
-        Meteor._debug("Sent DDP", DDPCommon.stringifyDDP(msg));
-      self.socket.send(DDPCommon.stringifyDDP(msg));
+      console.log(msg)
+      self.socket.send(stringifyDDP(msg));
     }
   },
 
@@ -595,7 +601,7 @@ _.extend(Session.prototype, {
       // add the ddp-rate-limiter package in case we don't have Accounts. A
       // user trying to use the ddp-rate-limiter must explicitly require it.
       // if (Package['ddp-rate-limiter']) {
-        // var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
+        // var RateLimiter = Package['ddp-rate-limiter'].RateLimiter;
         var rateLimiterInput = {
           userId: self.userId,
           clientAddress: self.connectionHandle.clientAddress,
@@ -604,14 +610,14 @@ _.extend(Session.prototype, {
           connectionId: self.id
         };
 
-        DDPRateLimiter._increment(rateLimiterInput);
-        var rateLimitResult = DDPRateLimiter._check(rateLimiterInput);
+        RateLimiter.increment(rateLimiterInput);
+        var rateLimitResult = RateLimiter.check(rateLimiterInput);
         if (!rateLimitResult.allowed) {
           self.send({
             msg: 'nosub', id: msg.id,
             error: new Meteor.Error(
               'too-many-requests',
-              DDPRateLimiter.getErrorMessage(rateLimitResult),
+              RateLimiter.getErrorMessage(rateLimitResult),
               {timeToReset: rateLimitResult.timeToReset})
           });
           return;
@@ -696,12 +702,12 @@ _.extend(Session.prototype, {
           name: msg.method,
           connectionId: self.id
         };
-        DDPRateLimiter._increment(rateLimiterInput);
-        var rateLimitResult = DDPRateLimiter._check(rateLimiterInput)
+        RateLimiter.increment(rateLimiterInput);
+        var rateLimitResult = RateLimiter.check(rateLimiterInput)
         if (!rateLimitResult.allowed) {
           var exception =  (new Meteor.Error(
             "too-many-requests",
-            DDPRateLimiter.getErrorMessage(rateLimitResult),
+            RateLimiter.getErrorMessage(rateLimitResult),
             {timeToReset: rateLimitResult.timeToReset}
           ));
           payload.error = wrapInternalException(
@@ -742,7 +748,7 @@ _.extend(Session.prototype, {
       //   // have a weak requirement for the ddp-rate-limiter package to be added
       //   // to our application.
       //   // if (Package['ddp-rate-limiter']) {
-      //   //   var DDPRateLimiter = Package['ddp-rate-limiter'].DDPRateLimiter;
+      //   //   var RateLimiter = Package['ddp-rate-limiter'].RateLimiter;
           
       //     var rateLimiterInput = {
       //       userId: self.userId,
@@ -751,12 +757,12 @@ _.extend(Session.prototype, {
       //       name: msg.method,
       //       connectionId: self.id
       //     };
-      //     DDPRateLimiter._increment(rateLimiterInput);
-      //     var rateLimitResult = DDPRateLimiter._check(rateLimiterInput)
+      //     RateLimiter._increment(rateLimiterInput);
+      //     var rateLimitResult = RateLimiter._check(rateLimiterInput)
       //     if (!rateLimitResult.allowed) {
       //       reject(new Meteor.Error(
       //         "too-many-requests",
-      //         DDPRateLimiter.getErrorMessage(rateLimitResult),
+      //         RateLimiter.getErrorMessage(rateLimitResult),
       //         {timeToReset: rateLimitResult.timeToReset}
       //       ));
       //       return;
@@ -1399,16 +1405,13 @@ var Server = module.exports = function (app, options) {
       var msg = {msg: 'error', reason: reason};
       if (offendingMessage)
         msg.offendingMessage = offendingMessage;
-      socket.send(DDPCommon.stringifyDDP(msg));
+      socket.send(stringifyDDP(msg));
     };
 
     socket.on('data', function (raw_msg) {
-      if (Meteor._printReceivedDDP) {
-        Meteor._debug("Received DDP", raw_msg);
-      }
       // try {
         try {
-          var msg = DDPCommon.parseDDP(raw_msg);
+          var msg = parseDDP(raw_msg);
         } catch (err) {
           sendError('Parse error');
           return;
@@ -1468,35 +1471,35 @@ _.extend(Server.prototype, {
   _handleConnect: function (socket, msg) {
     var self = this;
 
-    // The connect message must specify a version and an array of supported
-    // versions, and it must claim to support what it is proposing.
-    if (!(typeof (msg.version) === 'string' &&
-          _.isArray(msg.support) &&
-          _.all(msg.support, _.isString) &&
-          _.contains(msg.support, msg.version))) {
-      socket.send(DDPCommon.stringifyDDP({msg: 'failed',
-                                version: DDPCommon.SUPPORTED_DDP_VERSIONS[0]}));
-      socket.close();
-      return;
-    }
+    // // The connect message must specify a version and an array of supported
+    // // versions, and it must claim to support what it is proposing.
+    // if (!(typeof (msg.version) === 'string' &&
+    //       _.isArray(msg.support) &&
+    //       _.all(msg.support, _.isString) &&
+    //       _.contains(msg.support, msg.version))) {
+    //   socket.send(DDPCommon.stringifyDDP({msg: 'failed',
+    //                             version: DDPCommon.SUPPORTED_DDP_VERSIONS[0]}));
+    //   socket.close();
+    //   return;
+    // }
 
-    // In the future, handle session resumption: something like:
-    //  socket._meteorSession = self.sessions[msg.session]
-    var version = calculateVersion(msg.support, DDPCommon.SUPPORTED_DDP_VERSIONS);
+    // // In the future, handle session resumption: something like:
+    // //  socket._meteorSession = self.sessions[msg.session]
+    // var version = calculateVersion(msg.support, DDPCommon.SUPPORTED_DDP_VERSIONS);
 
-    if (msg.version !== version) {
-      // The best version to use (according to the client's stated preferences)
-      // is not the one the client is trying to use. Inform them about the best
-      // version to use.
-      socket.send(DDPCommon.stringifyDDP({msg: 'failed', version: version}));
-      socket.close();
-      return;
-    }
+    // if (msg.version !== version) {
+    //   // The best version to use (according to the client's stated preferences)
+    //   // is not the one the client is trying to use. Inform them about the best
+    //   // version to use.
+    //   socket.send(stringifyDDP({msg: 'failed', version: version}));
+    //   socket.close();
+    //   return;
+    // }
 
     // Yay, version matches! Create a new session.
     // Note: Troposphere depends on the ability to mutate
     // Meteor.server.options.heartbeatTimeout! This is a hack, but it's life.
-    socket._meteorSession = new Session(self, version, socket, self.options);
+    socket._meteorSession = new Session(self, socket, self.options);
     self.sessions[socket._meteorSession.id] = socket._meteorSession;
     self.onConnectionHook.each(function (callback) {
       if (socket._meteorSession)
@@ -1710,18 +1713,18 @@ _.extend(Server.prototype, {
   }
 });
 
-var calculateVersion = function (clientSupportedVersions,
-                                 serverSupportedVersions) {
-  var correctVersion = _.find(clientSupportedVersions, function (version) {
-    return _.contains(serverSupportedVersions, version);
-  });
-  if (!correctVersion) {
-    correctVersion = serverSupportedVersions[0];
-  }
-  return correctVersion;
-};
+// var calculateVersion = function (clientSupportedVersions,
+//                                  serverSupportedVersions) {
+//   var correctVersion = _.find(clientSupportedVersions, function (version) {
+//     return _.contains(serverSupportedVersions, version);
+//   });
+//   if (!correctVersion) {
+//     correctVersion = serverSupportedVersions[0];
+//   }
+//   return correctVersion;
+// };
 
-DDPServer._calculateVersion = calculateVersion;
+// DDPServer._calculateVersion = calculateVersion;
 
 
 // "blind" exceptions other than those that were deliberately thrown to signal

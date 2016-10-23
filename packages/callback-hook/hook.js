@@ -37,7 +37,7 @@ var _ = require('underscore')
 // callback will propagate up to the iterator function, and will
 // terminate calling the remaining callbacks if not caught.
 
-global.Hook = function (options) {
+var Hook = function (options) {
   var self = this;
   options = options || {};
   self.nextCallbackId = 0;
@@ -55,7 +55,7 @@ global.Hook = function (options) {
     self.exceptionHandler = options.debugPrintExceptions;
   }
 };
-
+module.exports = Hook
 _.extend(Hook.prototype, {
   register: function (callback) {
     var self = this;

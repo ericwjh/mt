@@ -124,7 +124,7 @@ CollectionPrototype._defineMutationMethods = function(options) {
         // All the methods do their own validation, instead of using check().
         check(arguments, [Match.Any]);
         const args = _.toArray(arguments);
-        try {
+        // try {
           // For an insert, if the client didn't specify an _id, generate one
           // now; because this uses DDP.randomStream, it will be consistent with
           // what the client generated. We generate it now rather than later so
@@ -189,14 +189,14 @@ CollectionPrototype._defineMutationMethods = function(options) {
             // is permitted.
             throw new Meteor.Error(403, "Access denied1");
           }
-        } catch (e) {
-          console.log(e)
-          if (e.name === 'MongoError' || e.name === 'MinimongoError') {
-            throw new Meteor.Error(409, e.toString());
-          } else {
-            throw e;
-          }
-        }
+        // } catch (e) {
+        //   console.log(e)
+        //   if (e.name === 'MongoError' || e.name === 'MinimongoError') {
+        //     throw new Meteor.Error(409, e.toString());
+        //   } else {
+        //     throw e;
+        //   }
+        // }
       };
     });
 

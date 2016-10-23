@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var Random = require('../random/random.js')
 // RandomStream allows for generation of pseudo-random values, from a seed.
 //
 // We use this for consistent 'random' numbers across the client and server.
@@ -22,7 +23,7 @@ var _ = require('underscore')
 //                          If an array, will be used as-is
 //                          If a value, will be converted to a single-value array
 //                          If omitted, a random array will be used as the seed.
-DDPCommon.RandomStream = function (options) {
+var RandomStream = function (options) {
   var self = this;
 
   this.seed = [].concat(options.seed || randomToken());
@@ -46,7 +47,7 @@ function randomToken() {
 // However, scope will normally be the current DDP method invocation,
 // so we'll use the stream with the specified name, and we should get
 // consistent values on the client and server sides of a method call.
-DDPCommon.RandomStream.get = function (scope, name) {
+RandomStream.get = function (scope, name) {
   if (!name) {
     name = "default";
   }
@@ -59,26 +60,14 @@ DDPCommon.RandomStream.get = function (scope, name) {
   }
   var randomStream = scope.randomStream;
   if (!randomStream) {
-    scope.randomStream = randomStream = new DDPCommon.RandomStream({
+    scope.randomStream = randomStream = new RandomStream({
       seed: scope.randomSeed
     });
   }
   return randomStream._sequence(name);
 };
 
-
-// Creates a randomSeed for passing to a method call.
-// Note that we take enclosing as an argument,
-// though we expect it to be DDP._CurrentInvocation.get()
-// However, we often evaluate makeRpcSeed lazily, and thus the relevant
-// invocation may not be the one currently in scope.
-// If enclosing is null, we'll use Random and values won't be repeatable.
-DDPCommon.makeRpcSeed = function (enclosing, methodName) {
-  var stream = DDPCommon.RandomStream.get(enclosing, '/rpc/' + methodName);
-  return stream.hexString(20);
-};
-
-_.extend(DDPCommon.RandomStream.prototype, {
+_.extend(RandomStream.prototype, {
   // Get a random sequence with the specified name, creating it if does not exist.
   // New sequences are seeded with the seed concatenated with the name.
   // By passing a seed into Random.create, we use the Alea generator.
@@ -98,3 +87,5 @@ _.extend(DDPCommon.RandomStream.prototype, {
     return sequence;
   }
 });
+
+module.exports = RandomStream

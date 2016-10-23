@@ -6,7 +6,7 @@
  * @namespace Tracker
  * @summary The namespace for Tracker-related methods.
  */
-module.exports = global.Tracker = {};
+ var Tracker = module.exports = {};
 
 // http://docs.meteor.com/#tracker_active
 
@@ -38,69 +38,69 @@ var setCurrentComputation = function (c) {
   Tracker.active = !! c;
 };
 
-var _debugFunc = function () {
-  // We want this code to work without Meteor, and also without
-  // "console" (which is technically non-standard and may be missing
-  // on some browser we come across, like it was on IE 7).
-  //
-  // Lazy evaluation because `Meteor` does not exist right away.(??)
-  return (typeof Meteor !== "undefined" ? Meteor._debug :
-          ((typeof console !== "undefined") && console.error ?
-           function () { console.error.apply(console, arguments); } :
-           function () {}));
-};
+// var _debugFunc = function () {
+//   // We want this code to work without Meteor, and also without
+//   // "console" (which is technically non-standard and may be missing
+//   // on some browser we come across, like it was on IE 7).
+//   //
+//   // Lazy evaluation because `Meteor` does not exist right away.(??)
+//   return (typeof Meteor !== "undefined" ? Meteor._debug :
+//           ((typeof console !== "undefined") && console.error ?
+//            function () { console.error.apply(console, arguments); } :
+//            function () {}));
+// };
 
-var _maybeSuppressMoreLogs = function (messagesLength) {
-  // Sometimes when running tests, we intentionally suppress logs on expected
-  // printed errors. Since the current implementation of _throwOrLog can log
-  // multiple separate log messages, suppress all of them if at least one suppress
-  // is expected as we still want them to count as one.
-  if (typeof Meteor !== "undefined") {
-    if (Meteor._suppressed_log_expected()) {
-      Meteor._suppress_log(messagesLength - 1);
-    }
-  }
-};
+// var _maybeSuppressMoreLogs = function (messagesLength) {
+//   // Sometimes when running tests, we intentionally suppress logs on expected
+//   // printed errors. Since the current implementation of _throwOrLog can log
+//   // multiple separate log messages, suppress all of them if at least one suppress
+//   // is expected as we still want them to count as one.
+//   if (typeof Meteor !== "undefined") {
+//     if (Meteor._suppressed_log_expected()) {
+//       Meteor._suppress_log(messagesLength - 1);
+//     }
+//   }
+// };
 
-var _throwOrLog = function (from, e) {
-  if (throwFirstError) {
-    throw e;
-  } else {
-    var printArgs = ["Exception from Tracker " + from + " function:"];
-    if (e.stack && e.message && e.name) {
-      var idx = e.stack.indexOf(e.message);
-      if (idx < 0 || idx > e.name.length + 2) { // check for "Error: "
-        // message is not part of the stack
-        var message = e.name + ": " + e.message;
-        printArgs.push(message);
-      }
-    }
-    printArgs.push(e.stack);
-    _maybeSuppressMoreLogs(printArgs.length);
+// var _throwOrLog = function (from, e) {
+//   if (throwFirstError) {
+//     throw e;
+//   } else {
+//     var printArgs = ["Exception from Tracker " + from + " function:"];
+//     if (e.stack && e.message && e.name) {
+//       var idx = e.stack.indexOf(e.message);
+//       if (idx < 0 || idx > e.name.length + 2) { // check for "Error: "
+//         // message is not part of the stack
+//         var message = e.name + ": " + e.message;
+//         printArgs.push(message);
+//       }
+//     }
+//     printArgs.push(e.stack);
+//     _maybeSuppressMoreLogs(printArgs.length);
 
-    for (var i = 0; i < printArgs.length; i++) {
-      _debugFunc()(printArgs[i]);
-    }
-  }
-};
+//     for (var i = 0; i < printArgs.length; i++) {
+//       _debugFunc()(printArgs[i]);
+//     }
+//   }
+// };
 
 // Takes a function `f`, and wraps it in a `Meteor._noYieldsAllowed`
 // block if we are running on the server. On the client, returns the
 // original function (since `Meteor._noYieldsAllowed` is a
 // no-op). This has the benefit of not adding an unnecessary stack
 // frame on the client.
-var withNoYieldsAllowed = function (f) {
-  if ((typeof Meteor === 'undefined') || Meteor.isClient) {
-    return f;
-  } else {
-    return function () {
-      var args = arguments;
-      Meteor._noYieldsAllowed(function () {
-        f.apply(null, args);
-      });
-    };
-  }
-};
+// var withNoYieldsAllowed = function (f) {
+//   if ((typeof Meteor === 'undefined') || Meteor.isClient) {
+//     return f;
+//   } else {
+//     return function () {
+//       var args = arguments;
+//       Meteor._noYieldsAllowed(function () {
+//         f.apply(null, args);
+//       });
+//     };
+//   }
+// };
 
 var nextId = 1;
 // computations whose callbacks we should call at flush time
@@ -125,8 +125,7 @@ var afterFlushCallbacks = [];
 
 var requireFlush = function () {
   if (! willFlush) {
-    
-      setTimeout(Tracker._runFlush, 0);
+    setTimeout(Tracker._runFlush, 0);
     willFlush = true;
   }
 };
@@ -224,12 +223,9 @@ Tracker.Computation = function (f, parent, onError) {
 Tracker.Computation.prototype.onInvalidate = function (f) {
   var self = this;
 
-  if (typeof f !== 'function')
-    throw new Error("onInvalidate requires a function");
-
   if (self.invalidated) {
     Tracker.nonreactive(function () {
-      withNoYieldsAllowed(f)(self);
+     f(self);
     });
   } else {
     self._onInvalidateCallbacks.push(f);
@@ -244,12 +240,10 @@ Tracker.Computation.prototype.onInvalidate = function (f) {
 Tracker.Computation.prototype.onStop = function (f) {
   var self = this;
 
-  if (typeof f !== 'function')
-    throw new Error("onStop requires a function");
 
   if (self.stopped) {
     Tracker.nonreactive(function () {
-      withNoYieldsAllowed(f)(self);
+      f(self);
     });
   } else {
     self._onStopCallbacks.push(f);
@@ -278,7 +272,7 @@ Tracker.Computation.prototype.invalidate = function () {
     // self.invalidated === true.
     for(var i = 0, f; f = self._onInvalidateCallbacks[i]; i++) {
       Tracker.nonreactive(function () {
-        withNoYieldsAllowed(f)(self);
+        f(self);
       });
     }
     self._onInvalidateCallbacks = [];
@@ -301,7 +295,7 @@ Tracker.Computation.prototype.stop = function () {
     delete Tracker._computations[self._id];
     for(var i = 0, f; f = self._onStopCallbacks[i]; i++) {
       Tracker.nonreactive(function () {
-        withNoYieldsAllowed(f)(self);
+        f(self);
       });
     }
     self._onStopCallbacks = [];
@@ -317,7 +311,7 @@ Tracker.Computation.prototype._compute = function () {
   var previousInCompute = inCompute;
   inCompute = true;
   try {
-    withNoYieldsAllowed(self._func)(self);
+    self._func(self);
   } finally {
     setCurrentComputation(previous);
     inCompute = previousInCompute;
@@ -506,11 +500,8 @@ Tracker._runFlush = function (options) {
         // call one afterFlush callback, which may
         // invalidate more computations
         var func = afterFlushCallbacks.shift();
-        try {
           func();
-        } catch (e) {
-          _throwOrLog("afterFlush", e);
-        }
+       
       }
     }
     finishedTry = true;
@@ -566,9 +557,6 @@ Tracker._runFlush = function (options) {
  * @returns {Tracker.Computation}
  */
 Tracker.autorun = function (f, options) {
-  if (typeof f !== 'function')
-    throw new Error('Tracker.autorun requires a function argument');
-
   options = options || {};
 
   constructingComputation = true;

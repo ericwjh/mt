@@ -1,5 +1,5 @@
-global.MongoID = {};
-
+var EJSON = require('../ejson/ejson.js')
+var MongoID = {};
 MongoID._looksLikeObjectID = function (str) {
   return str.length === 24 && str.match(/^[0-9a-f]*$/);
 };
@@ -18,6 +18,7 @@ MongoID.ObjectID = function (hexString) {
     self._str = Random.hexString(24);
   }
 };
+module.exports = MongoID
 
 MongoID.ObjectID.prototype.toString = function () {
   var self = this;

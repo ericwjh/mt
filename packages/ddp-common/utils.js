@@ -1,7 +1,8 @@
 var _ = require('underscore')
-DDPCommon.SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
+var EJSON = require('../ejson/ejson.js')
+var SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
 
-DDPCommon.parseDDP = function (stringMessage) {
+var parseDDP = function (stringMessage) {
   try {
     var msg = JSON.parse(stringMessage);
   } catch (e) {
@@ -35,7 +36,7 @@ DDPCommon.parseDDP = function (stringMessage) {
   return msg;
 };
 
-DDPCommon.stringifyDDP = function (msg) {
+var stringifyDDP = function (msg) {
   var copy = EJSON.clone(msg);
   // swizzle 'changed' messages from 'fields undefined' rep to 'fields
   // and cleared' rep
@@ -63,3 +64,8 @@ DDPCommon.stringifyDDP = function (msg) {
   return JSON.stringify(copy);
 };
 
+module.exports = {
+  parseDDP: parseDDP,
+  stringifyDDP: stringifyDDP,
+  SUPPORTED_DDP_VERSIONS: SUPPORTED_DDP_VERSIONS
+}
