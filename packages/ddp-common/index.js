@@ -1,5 +1,3 @@
-// require('./packages-built/ddp-common.js')
-// require('./namespace.js')
 var utlis = require('./utils.js')
 var RandomStream = require('./random_stream.js')
 module.exports = {

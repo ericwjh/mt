@@ -7,7 +7,7 @@
 // - If the return value has an _id field, verify that it matches the
 //   original _id field
 // - If the return value doesn't have an _id field, add it back.
-LocalCollection.wrapTransform = function (transform) {
+var wrapTransform = function (transform) {
   if (! transform)
     return null;
 
@@ -44,3 +44,5 @@ LocalCollection.wrapTransform = function (transform) {
   wrapped.__wrappedTransform__ = true;
   return wrapped;
 };
+
+module.exports = wrapTransform

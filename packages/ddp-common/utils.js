@@ -1,6 +1,6 @@
 var _ = require('underscore')
 var EJSON = require('../ejson/ejson.js')
-var SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
+// var SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
 
 var parseDDP = function (stringMessage) {
   try {
@@ -66,6 +66,7 @@ var stringifyDDP = function (msg) {
 
 module.exports = {
   parseDDP: parseDDP,
-  stringifyDDP: stringifyDDP,
-  SUPPORTED_DDP_VERSIONS: SUPPORTED_DDP_VERSIONS
+  stringifyDDP: stringifyDDP
+  // ,
+  // SUPPORTED_DDP_VERSIONS: SUPPORTED_DDP_VERSIONS
 }

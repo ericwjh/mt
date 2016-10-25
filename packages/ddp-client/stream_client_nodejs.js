@@ -182,7 +182,7 @@ _.extend(LivedataTest.ClientStream.prototype, {
 
       // Faye's 'error' object is not a JS error (and among other things,
       // doesn't stringify well). Convert it to one.
-      self._lostConnection(new DDP.ConnectionError(error.message));
+      self._lostConnection(new ConnectionError(error.message));
     });
 
 

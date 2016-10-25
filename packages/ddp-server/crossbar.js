@@ -5,7 +5,7 @@ var MongoID = require('../mongo-id/id')
 // See _match for the definition of how a notification matches a trigger.
 // All notifications and triggers must have a string key named 'collection'.
 
-DDPServer._Crossbar = function (options) {
+var Crossbar = function (options) {
   var self = this;
   options = options || {};
 
@@ -17,8 +17,8 @@ DDPServer._Crossbar = function (options) {
   self.factPackage = options.factPackage || "livedata";
   self.factName = options.factName || null;
 };
-
-_.extend(DDPServer._Crossbar.prototype, {
+module.exports = Crossbar
+_.extend(Crossbar.prototype, {
   // msg is a trigger or a notification
   _collectionForMessage: function (msg) {
     var self = this;
@@ -54,17 +54,17 @@ _.extend(DDPServer._Crossbar.prototype, {
     }
     self.listenersByCollection[collection][id] = record;
 
-    if (self.factName && Package.facts) {
-      Package.facts.Facts.incrementServerFact(
-        self.factPackage, self.factName, 1);
-    }
+    // if (self.factName && Package.facts) {
+    //   Package.facts.Facts.incrementServerFact(
+    //     self.factPackage, self.factName, 1);
+    // }
 
     return {
       stop: function () {
-        if (self.factName && Package.facts) {
-          Package.facts.Facts.incrementServerFact(
-            self.factPackage, self.factName, -1);
-        }
+        // if (self.factName && Package.facts) {
+        //   Package.facts.Facts.incrementServerFact(
+        //     self.factPackage, self.factName, -1);
+        // }
         delete self.listenersByCollection[collection][id];
         if (_.isEmpty(self.listenersByCollection[collection])) {
           delete self.listenersByCollection[collection];
@@ -160,6 +160,6 @@ _.extend(DDPServer._Crossbar.prototype, {
 // should call beginWrite on the current write fence before they return, if they
 // want to delay the write fence from firing (ie, the DDP method-data-updated
 // message from being sent).
-DDPServer._InvalidationCrossbar = new DDPServer._Crossbar({
-  factName: "invalidation-crossbar-listeners"
-});
+// DDPServer._InvalidationCrossbar = new DDPServer._Crossbar({
+//   factName: "invalidation-crossbar-listeners"
+// });

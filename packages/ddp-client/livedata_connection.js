@@ -1,17 +1,22 @@
 var _ = require('underscore')
 var Random = require('../random/random.js')
-var Tracker = require('../tracker/tracker.js')
+var Tracker = require('../tracker')
 var stringifyDDP = require('../ddp-common/utils').stringifyDDP
 var parseDDP = require('../ddp-common/utils').parseDDP
 var MethodInvocation =  require('../ddp-common/method_invocation')
+var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var DDPCommon =  require('../ddp-common')
 var EJSON = require('../ejson/ejson.js')
 var MongoID = require('../mongo-id/id.js')
-if (Meteor.isServer) {
-  var path =   require('path');
-  var Fiber =   require('fibers');
-var Future =   require('fibers/future');
-}
+var DiffSequence = require('../diff-sequence'); 
+var MongoIDMap = require('./id_map.js')
+var Dependency = require('../tracker/Dependency')
+var computations = require('../tracker/computations')
+// if (Meteor.isServer) {
+//   var path =   require('path');
+//   var Fiber =   require('fibers');
+// var Future =   require('fibers/future');
+// }
 
 // @param url {String|Object} URL to Meteor app,
 //   or an object as a test hook (see code)
@@ -213,21 +218,21 @@ var Connection = function (url, options) {
 
   // Reactive userId.
   self._userId = null;
-  self._userIdDeps = new Tracker.Dependency;
+  self._userIdDeps = new Dependency;
 
   // Block auto-reload while we're waiting for method responses.
-  if (Meteor.isClient && Package.reload && !options.reloadWithOutstanding) {
-    Package.reload.Reload._onMigrate(function (retry) {
-      if (!self._readyToMigrate()) {
-        if (self._retryMigrate)
-          throw new Error("Two migrations in progress?");
-        self._retryMigrate = retry;
-        return false;
-      } else {
-        return [true];
-      }
-    });
-  }
+  // if (Meteor.isClient && Package.reload && !options.reloadWithOutstanding) {
+  //   Package.reload.Reload._onMigrate(function (retry) {
+  //     if (!self._readyToMigrate()) {
+  //       if (self._retryMigrate)
+  //         throw new Error("Two migrations in progress?");
+  //       self._retryMigrate = retry;
+  //       return false;
+  //     } else {
+  //       return [true];
+  //     }
+  //   });
+  // }
 
   var onMessage = function (raw_msg) {
       var msg = parseDDP(raw_msg)
@@ -613,7 +618,7 @@ _.extend(Connection.prototype, {
         params: EJSON.clone(params),
         inactive: false,
         ready: false,
-        readyDeps: new Tracker.Dependency,
+        readyDeps: new Dependency,
         readyCallback: callbacks.onReady,
         // XXX COMPAT WITH 1.0.3.1 #errorCallback
         errorCallback: callbacks.onError,
@@ -654,14 +659,14 @@ _.extend(Connection.prototype, {
       subscriptionId: id
     };
 
-    if (Tracker.active) {
+    if (computations.active) {
       // We're in a reactive computation, so we'd like to unsubscribe when the
       // computation is invalidated... but not if the rerun just re-subscribes
       // to the same subscription!  When a rerun happens, we use onInvalidate
       // as a change to mark the subscription "inactive" so that it can
       // be reused from the rerun.  If it isn't reused, it's killed from
       // an afterFlush.
-      Tracker.onInvalidate(function (c) {
+      computations.onInvalidate(function (c) {
         if (_.has(self._subscriptions, id))
           self._subscriptions[id].inactive = true;
 
@@ -801,7 +806,7 @@ _.extend(Connection.prototype, {
       };
     })();
 
-    var enclosing = DDP._CurrentInvocation.get();
+    var enclosing = CurrentInvocation.get();
     var alreadyInSimulation = enclosing && enclosing.isSimulation;
 
     // Lazily generate a randomSeed, only if it is requested by the stub.
@@ -853,7 +858,7 @@ _.extend(Connection.prototype, {
       // try {
         // Note that unlike in the corresponding server code, we never audit
         // that stubs check() their arguments.
-        var stubReturnValue = DDP._CurrentInvocation.withValue(invocation, function () {
+        var stubReturnValue = CurrentInvocation.withValue(invocation, function () {
           if (Meteor.isServer) {
             // Because saveOriginals and retrieveOriginals aren't reentrant,
             // don't allow stubs to yield.
@@ -1750,7 +1755,7 @@ LivedataTest.Connection = Connection;
  * @locus Anywhere
  * @param {String} url The URL of another Meteor application.
  */
-DDP.connect = function (url, options) {
+module.exports = function (url, options) {
   var ret = new Connection(url, options);
   allConnections.push(ret); // hack. see below.
   return ret;
@@ -1760,7 +1765,7 @@ DDP.connect = function (url, options) {
 // loading all the data it needs.
 //
 global.allConnections = [];
-DDP._allSubscriptionsReady = function () {
+function _allSubscriptionsReady() {
   return _.all(allConnections, function (conn) {
     return _.all(conn._subscriptions, function (sub) {
       return sub.ready;

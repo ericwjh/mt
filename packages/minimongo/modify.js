@@ -12,7 +12,7 @@ var EJSON = require('../ejson/ejson')
 //   - isInsert is set when _modify is being called to compute the document to
 //     insert as part of an upsert operation. We use this primarily to figure
 //     out when to set the fields in $setOnInsert, if present.
-LocalCollection._modify = function (doc, mod, options) {
+module.exports = function _modify(doc, mod, options) {
   options = options || {};
   if (!isPlainObject(mod))
     throw MinimongoError("Modifier must be an object");

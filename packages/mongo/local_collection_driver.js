@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var LocalCollection = require('../minimongo/LocalCollection')
 var LocalCollectionDriver = function () {
   var self = this;
   self.noConnCollections = {};

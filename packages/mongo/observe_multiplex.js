@@ -1,22 +1,22 @@
 var _ =   require('underscore');
 var Future =   require('fibers/future');
 var EJSON =   require('../ejson/ejson');
-
+var LocalCollection = require('../minimongo/LocalCollection')
+var observe = require('../minimongo/observe')
 module.exports = global.ObserveMultiplexer = function (options) {
   var self = this;
 
   if (!options || !_.has(options, 'ordered'))
     throw Error("must specified ordered");
-
-  Package.facts && Package.facts.Facts.incrementServerFact(
-    "mongo-livedata", "observe-multiplexers", 1);
+  // Package.facts && Package.facts.Facts.incrementServerFact(
+  //   "mongo-livedata", "observe-multiplexers", 1);
 
   self._ordered = options.ordered;
   self._onStop = options.onStop || function () {};
   self._queue = new Meteor._SynchronousQueue();
   self._handles = {};
   self._readyFuture = new Future;
-  self._cache = new LocalCollection._CachingChangeObserver({
+  self._cache = new observe._CachingChangeObserver({
     ordered: options.ordered});
   // Number of addHandleAndSendInitialAdds tasks scheduled but not yet
   // running. removeHandle uses this to know if it's time to call the onStop
@@ -43,8 +43,8 @@ _.extend(ObserveMultiplexer.prototype, {
         "Can't call observeChanges from an observe callback on the same query");
     ++self._addHandleTasksScheduledButNotPerformed;
 
-    Package.facts && Package.facts.Facts.incrementServerFact(
-      "mongo-livedata", "observe-handles", 1);
+    // Package.facts && Package.facts.Facts.incrementServerFact(
+    //   "mongo-livedata", "observe-handles", 1);
 
     self._queue.runTask(function () {
       self._handles[handle._id] = handle;
@@ -74,8 +74,8 @@ _.extend(ObserveMultiplexer.prototype, {
 
     delete self._handles[id];
 
-    Package.facts && Package.facts.Facts.incrementServerFact(
-      "mongo-livedata", "observe-handles", -1);
+    // Package.facts && Package.facts.Facts.incrementServerFact(
+    //   "mongo-livedata", "observe-handles", -1);
 
     if (_.isEmpty(self._handles) &&
         self._addHandleTasksScheduledButNotPerformed === 0) {
@@ -94,8 +94,8 @@ _.extend(ObserveMultiplexer.prototype, {
     // Call stop callback (which kills the underlying process which sends us
     // callbacks and removes us from the connection's dictionary).
     self._onStop();
-    Package.facts && Package.facts.Facts.incrementServerFact(
-      "mongo-livedata", "observe-multiplexers", -1);
+    // Package.facts && Package.facts.Facts.incrementServerFact(
+    //   "mongo-livedata", "observe-multiplexers", -1);
 
     // Cause future addHandleAndSendInitialAdds calls to throw (but the onStop
     // callback should make our connection forget about us).
@@ -176,14 +176,19 @@ _.extend(ObserveMultiplexer.prototype, {
       // can continue until these are done. (But we do have to be careful to not
       // use a handle that got removed, because removeHandle does not use the
       // queue; thus, we iterate over an array of keys that we control.)
-      _.each(_.keys(self._handles), function (handleId) {
-        var handle = self._handles && self._handles[handleId];
-        if (!handle)
-          return;
+      for (var handleId in self._handles) {
+        var handle = self._handles[handleId];
         var callback = handle['_' + callbackName];
-        // clone arguments so that callbacks can mutate their arguments
         callback && callback.apply(null, EJSON.clone(args));
-      });
+      }
+      // _.each(_.keys(self._handles), function (handleId) {
+      //   var handle = self._handles && self._handles[handleId];
+      //   if (!handle)
+      //     return;
+      //   var callback = handle['_' + callbackName];
+      //   // clone arguments so that callbacks can mutate their arguments
+      //   callback && callback.apply(null, EJSON.clone(args));
+      // });
     });
   },
 

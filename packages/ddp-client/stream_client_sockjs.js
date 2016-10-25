@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var SockJS = require('sockjs-client')
 // @param url {String} URL to Meteor app
 //   "http://subdomain.meteor.com/" or "/" or
 //   "ddp+sockjs://foo-**.meteor.com/sockjs"
@@ -112,7 +113,7 @@ _.extend(LivedataTest.ClientStream.prototype, {
   _heartbeat_timeout: function () {
     var self = this;
     Meteor._debug("Connection timeout. No sockjs heartbeat received.");
-    self._lostConnection(new DDP.ConnectionError("Heartbeat timed out"));
+    self._lostConnection(new ConnectionError("Heartbeat timed out"));
   },
 
   _heartbeat_received: function () {
@@ -128,40 +129,40 @@ _.extend(LivedataTest.ClientStream.prototype, {
       self.HEARTBEAT_TIMEOUT);
   },
 
-  _sockjsProtocolsWhitelist: function () {
-    // only allow polling protocols. no streaming.  streaming
-    // makes safari spin.
-    var protocolsWhitelist = [
-      'xdr-polling', 'xhr-polling', 'iframe-xhr-polling', 'jsonp-polling'];
+  // _sockjsProtocolsWhitelist: function () {
+  //   // only allow polling protocols. no streaming.  streaming
+  //   // makes safari spin.
+  //   var transports = [
+  //     'xdr-polling', 'xhr-polling', 'iframe-xhr-polling', 'jsonp-polling'];
 
-    // iOS 4 and 5 and below crash when using websockets over certain
-    // proxies. this seems to be resolved with iOS 6. eg
-    // https://github.com/LearnBoost/socket.io/issues/193#issuecomment-7308865.
-    //
-    // iOS <4 doesn't support websockets at all so sockjs will just
-    // immediately fall back to http
-    var noWebsockets = navigator &&
-          /iPhone|iPad|iPod/.test(navigator.userAgent) &&
-          /OS 4_|OS 5_/.test(navigator.userAgent);
+  //   // iOS 4 and 5 and below crash when using websockets over certain
+  //   // proxies. this seems to be resolved with iOS 6. eg
+  //   // https://github.com/LearnBoost/socket.io/issues/193#issuecomment-7308865.
+  //   //
+  //   // iOS <4 doesn't support websockets at all so sockjs will just
+  //   // immediately fall back to http
+  //   var noWebsockets = navigator &&
+  //         /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+  //         /OS 4_|OS 5_/.test(navigator.userAgent);
 
-    if (!noWebsockets)
-      protocolsWhitelist = ['websocket'].concat(protocolsWhitelist);
+  //   if (!noWebsockets)
+  //     transports = ['websocket'].concat(transports);
 
-    return protocolsWhitelist;
-  },
+  //   return transports;
+  // },
 
   _launchConnection: function () {
     var self = this;
     self._cleanup(); // cleanup the old socket, if there was one.
 
-    var options = _.extend({
-      protocols_whitelist:self._sockjsProtocolsWhitelist()
-    }, self.options._sockjsOptions);
+    // var options = _.extend({
+    //   protocols_whitelist:self._sockjsProtocolsWhitelist()
+    // }, self.options._sockjsOptions);
 
     // Convert raw URL to SockJS URL each time we open a connection, so that we
     // can connect to random hostnames and get around browser per-host
     // connection limits.
-    self.socket = new SockJS(toSockjsUrl(self.rawUrl), undefined, options);
+    self.socket = new SockJS(toSockjsUrl(self.rawUrl), undefined, self.options._sockjsOptions);
     self.socket.onopen = function (data) {
       self._connected();
     };
@@ -189,7 +190,7 @@ _.extend(LivedataTest.ClientStream.prototype, {
       clearTimeout(self.connectionTimer);
     self.connectionTimer = setTimeout(function () {
       self._lostConnection(
-        new DDP.ConnectionError("DDP connection timed out"));
+        new ConnectionError("DDP connection timed out"));
     }, self.CONNECT_TIMEOUT);
   }
 });

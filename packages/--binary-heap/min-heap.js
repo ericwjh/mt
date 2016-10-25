@@ -1,5 +1,6 @@
 var _ = require('underscore')
-global.MinHeap = function (comparator, options) {
+var MaxHeap = require('./max-heap')
+var MinHeap = function (comparator, options) {
   var self = this;
   MaxHeap.call(self, function (a, b) {
     return -comparator(a, b);
@@ -7,6 +8,7 @@ global.MinHeap = function (comparator, options) {
 };
 
 Meteor._inherits(MinHeap, MaxHeap);
+module.exports = MinHeap
 
 _.extend(MinHeap.prototype, {
   maxElementId: function () {

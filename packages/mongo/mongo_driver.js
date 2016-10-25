@@ -18,6 +18,16 @@ var EJSON = require('../ejson/ejson.js')
 var Collection = require('./collection.js')
 var MongoID = require('../mongo-id/id.js')
 var Hook = require('../callback-hook/hook');
+var LocalCollection = require('../minimongo/LocalCollection')
+var observe = require('../minimongo/observe')
+var objectid = require('../minimongo/objectid')
+var Selector = require('../minimongo/selector')
+var _modify = require('../minimongo/modify')
+var _IdMap = require('../minimongo/id_map')
+var wrapTransform = require('../minimongo/wrap_transform')
+require('../minimongo/helpers')
+
+
 var MongoInternals = {};
 module.exports = MongoInternals
 // global.MongoTest = {};
@@ -277,7 +287,7 @@ MongoConnection.prototype._createCappedCollection = function (
 // fence), you should call 'committed()' on the object returned.
 MongoConnection.prototype._maybeBeginWrite = function () {
   var self = this;
-  var fence = DDPServer._CurrentWriteFence.get();
+  var fence = global.CurrentWriteFence.get();
   if (fence)
     return fence.beginWrite();
   else
@@ -353,7 +363,7 @@ MongoConnection.prototype._insert = function (collection_name, document,
     return;
   }
 
-  if (!(LocalCollection._isPlainObject(document) &&
+  if (!(isPlainObject(document) &&
         !EJSON._isCustomType(document))) {
     sendError(new Error(
       "Only plain objects may be inserted into MongoDB"));
@@ -384,7 +394,7 @@ MongoConnection.prototype._refresh = function (collectionName, selector) {
   // specific to other documents. (Note that multiple notifications here should
   // not cause multiple polls, since all our listener is doing is enqueueing a
   // poll.)
-  var specificIds = LocalCollection._idsMatchedBySelector(selector);
+  var specificIds = objectid._idsMatchedBySelector(selector);
   if (specificIds) {
     _.each(specificIds, function (id) {
       Meteor.refresh(_.extend({id: id}, refreshKey));
@@ -479,7 +489,7 @@ MongoConnection.prototype._update = function (collection_name, selector, mod,
   if (!mod || typeof mod !== 'object')
     throw new Error("Invalid modifier. Modifier must be an object.");
 
-  if (!(LocalCollection._isPlainObject(mod) &&
+  if (!(isPlainObject(mod) &&
         !EJSON._isCustomType(mod))) {
     throw new Error(
       "Only plain objects may be used as replacement" +
@@ -634,7 +644,7 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
     // selector and mod.  We assume it doesn't matter, as far as
     // the behavior of modifiers is concerned, whether `_modify`
     // is run on EJSON or on mongo-converted EJSON.
-    var selectorDoc = LocalCollection._removeDollarOperators(selector);
+    var selectorDoc = Selector._removeDollarOperators(selector);
 
     newDoc = selectorDoc;
 
@@ -666,7 +676,7 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
       }
     });
 
-    LocalCollection._modify(newDoc, mod, {isInsert: true});
+    _modify(newDoc, mod, {isInsert: true});
   } else {
     newDoc = mod;
   }
@@ -901,12 +911,12 @@ Cursor.prototype._getCollectionName = function () {
 
 Cursor.prototype.observe = function (callbacks) {
   var self = this;
-  return LocalCollection._observeFromObserveChanges(self, callbacks);
+  return observe._observeFromObserveChanges(self, callbacks);
 };
 
 Cursor.prototype.observeChanges = function (callbacks) {
   var self = this;
-  var ordered = LocalCollection._observeChangesCallbacksAreOrdered(callbacks);
+  var ordered = observe._observeChangesCallbacksAreOrdered(callbacks);
   return self._mongo._observeChanges(
     self._cursorDescription, ordered, callbacks);
 };
@@ -962,7 +972,7 @@ var SynchronousCursor = function (dbCursor, cursorDescription, options) {
   // inside a user-visible Cursor, we want to provide the outer cursor!
   self._selfForIteration = options.selfForIteration || self;
   if (options.useTransform && cursorDescription.options.transform) {
-    self._transform = LocalCollection.wrapTransform(
+    self._transform = wrapTransform(
       cursorDescription.options.transform);
   } else {
     self._transform = null;
@@ -974,7 +984,7 @@ var SynchronousCursor = function (dbCursor, cursorDescription, options) {
   self._synchronousNextObject = Future.wrap(
     dbCursor.nextObject.bind(dbCursor), 0);
   self._synchronousCount = Future.wrap(dbCursor.count.bind(dbCursor));
-  self._visitedIds = new LocalCollection._IdMap;
+  self._visitedIds = new _IdMap;
 };
 
 _.extend(SynchronousCursor.prototype, {
@@ -1038,7 +1048,7 @@ _.extend(SynchronousCursor.prototype, {
     // known to be synchronous
     self._dbCursor.rewind();
 
-    self._visitedIds = new LocalCollection._IdMap;
+    self._visitedIds = new _IdMap;
   },
 
   // Mostly usable for tailable cursors.
@@ -1064,7 +1074,7 @@ _.extend(SynchronousCursor.prototype, {
     if (ordered) {
       return self.fetch();
     } else {
-      var results = new LocalCollection._IdMap;
+      var results = new _IdMap;
       self.forEach(function (doc) {
         results.set(doc._id, doc);
       });
@@ -1246,7 +1256,7 @@ MongoConnection.prototype._observeChanges = function (
 global.listenAll = function (cursorDescription, listenCallback) {
   var listeners = [];
   forEachTrigger(cursorDescription, function (trigger) {
-    listeners.push(DDPServer._InvalidationCrossbar.listen(
+    listeners.push(global.InvalidationCrossbar.listen(
       trigger, listenCallback));
   });
 
@@ -1261,7 +1271,7 @@ global.listenAll = function (cursorDescription, listenCallback) {
 
 global.forEachTrigger = function (cursorDescription, triggerCallback) {
   var key = {collection: cursorDescription.collectionName};
-  var specificIds = LocalCollection._idsMatchedBySelector(
+  var specificIds = objectid._idsMatchedBySelector(
     cursorDescription.selector);
   if (specificIds) {
     _.each(specificIds, function (id) {

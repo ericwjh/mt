@@ -12,7 +12,7 @@ var _ = require('underscore')
 // first object comes first in order, 1 if the second object comes
 // first, or 0 if neither object comes before the other.
 
-Minimongo.Sorter = function (spec, options) {
+exports.Sorter = function (spec, options) {
   var self = this;
   options = options || {};
 
@@ -78,7 +78,7 @@ Minimongo.Sorter = function (spec, options) {
 
 // In addition to these methods, sorter_project.js defines combineIntoProjection
 // on the server only.
-_.extend(Minimongo.Sorter.prototype, {
+_.extend(exports.Sorter.prototype, {
   getComparator: function (options) {
     var self = this;
 
@@ -406,7 +406,7 @@ _.extend(Minimongo.Sorter.prototype, {
 // (functions (a,b)->(negative or positive or zero)), returns a single
 // comparator which uses each comparator in order and returns the first
 // non-zero value.
-var composeComparators = function (comparatorArray) {
+function composeComparators(comparatorArray) {
   return function (a, b) {
     for (var i = 0; i < comparatorArray.length; ++i) {
       var compare = comparatorArray[i](a, b);

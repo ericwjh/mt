@@ -7,8 +7,8 @@ var EJSON = require('../ejson/ejson')
 //            @returns - Object: a document with the fields filtered out
 //                       according to projection rules. Doesn't retain subfields
 //                       of passed argument.
-LocalCollection._compileProjection = function (fields) {
-  LocalCollection._checkSupportedProjection(fields);
+module.exports = function _compileProjection(fields) {
+  _checkSupportedProjection(fields);
 
   var _idProjection = _.isUndefined(fields._id) ? true : fields._id;
   var details = projectionDetails(fields);
@@ -161,7 +161,7 @@ global.pathsToTree = function (paths, newLeafFn, conflictFn, tree) {
   return tree;
 };
 
-LocalCollection._checkSupportedProjection = function (fields) {
+function _checkSupportedProjection(fields) {
   if (!_.isObject(fields) || _.isArray(fields))
     throw MinimongoError("fields option must be an object");
 

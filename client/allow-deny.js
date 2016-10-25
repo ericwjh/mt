@@ -1,6 +1,7 @@
 var _ = require('underscore')
 var check = require('../packages/check/match.js').check
 var Match = require('../packages/check/match.js').Match
+var CurrentInvocation = require('../packages/ddp-common/CurrentInvocation')
 ///
 /// Remote methods and access control.
 ///
@@ -35,7 +36,7 @@ var Match = require('../packages/check/match.js').Match
 // call all of them if it is able to make a decision without calling them all
 // (so don't include side effects).
 var insecure = true
-module.exports = global.AllowDeny = {
+var AllowDeny = module.exports = {
   CollectionPrototype: {}
 };
 
@@ -107,7 +108,7 @@ CollectionPrototype._defineMutationMethods = function(options) {
   // it wait()s until its result is ready, yielding.
   // This matches the behavior of macromongo on the server better.
   // XXX see #MeteorServerNull
-  if (self._connection && (self._connection === Meteor.server || Meteor.isClient)) {
+  if (self._connection && (self._connection === global.server || Meteor.isClient)) {
     const m = {};
 
     _.each(['insert', 'update', 'remove'], function (method) {
@@ -183,7 +184,11 @@ CollectionPrototype._defineMutationMethods = function(options) {
             //     invoke it. Bam, broken DDP connection.  Probably should just
             //     take this whole method and write it three times, invoking
             //     helpers for the common code.
-            return self._collection[method].apply(self._collection, args);
+            var result = self._collection[method].apply(self._collection, args);
+
+            delete result.connection
+            delete result.message
+            return result
           } else {
             // In secure mode, if we haven't called allow or deny, then nothing
             // is permitted.
@@ -500,6 +505,6 @@ function throwIfSelectorIsNotId(selector, methodName) {
 
 // Determine if we are in a DDP method simulation
 function alreadyInSimulation() {
-  const enclosing = DDP._CurrentInvocation.get();
+  const enclosing = CurrentInvocation.get();
   return enclosing && enclosing.isSimulation;
 }

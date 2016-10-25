@@ -6,7 +6,7 @@ var webpack = require('webpack');
 
 var mode = 'dev'
 var host = '0.0.0.0';
-var webpackPort = 9090;
+var webpackPort = 8080;
 var baseUrl = 'http://' + host + ':' + webpackPort
 
 var serverPort = 3000;

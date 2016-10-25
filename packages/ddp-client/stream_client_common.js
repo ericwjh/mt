@@ -63,7 +63,7 @@ var translateUrl =  function(url, newSchemeBase, subPath) {
   // forcing the path to be relative to the site root. Simultaneously,
   // we should set DDP_DEFAULT_CONNECTION_URL to include the site
   // root. See also client_convenience.js #RationalizingRelativeDDPURLs
-  url = Meteor._relativeToSiteRootUrl(url);
+  // url = Meteor._relativeToSiteRootUrl(url);
 
   if (endsWith(url, "/"))
     return url + subPath;
@@ -148,7 +148,7 @@ _.extend(LivedataTest.ClientStream.prototype, {
     if (self.currentStatus.connected) {
       if (options._force || options.url) {
         // force reconnect.
-        self._lostConnection(new DDP.ForcedReconnectError);
+        self._lostConnection(new ForcedReconnectError);
       } // else, noop.
       return;
     }
@@ -258,11 +258,11 @@ _.extend(LivedataTest.ClientStream.prototype, {
   }
 });
 
-DDP.ConnectionError = Meteor.makeErrorType(
+global.ConnectionError = Meteor.makeErrorType(
   "DDP.ConnectionError", function (message) {
     var self = this;
     self.message = message;
 });
 
-DDP.ForcedReconnectError = Meteor.makeErrorType(
+global.ForcedReconnectError = Meteor.makeErrorType(
   "DDP.ForcedReconnectError", function () {});

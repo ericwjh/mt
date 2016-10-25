@@ -1,5 +1,5 @@
 var Future =   require('fibers/future');
-
+var Crossbar = require('../ddp-server/Crossbar')
 global.OPLOG_COLLECTION = 'oplog.rs';
 
 var TOO_FAR_BEHIND = process.env.METEOR_OPLOG_TOO_FAR_BEHIND || 2000;
@@ -32,7 +32,7 @@ global.OplogHandle = function (oplogUrl, dbName) {
   self._stopped = false;
   self._tailHandle = null;
   self._readyFuture = new Future();
-  self._crossbar = new DDPServer._Crossbar({
+  self._crossbar = new Crossbar({
     factPackage: "mongo-livedata", factName: "oplog-watchers"
   });
   self._baseOplogSelector = {

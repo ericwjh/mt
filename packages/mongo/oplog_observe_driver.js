@@ -139,7 +139,7 @@ module.exports = global.OplogObserveDriver = function (options) {
   self._stopHandles.push(listenAll(
     self._cursorDescription, function (notification) {
       // If we're not in a pre-fire write fence, we don't have to do anything.
-      var fence = DDPServer._CurrentWriteFence.get();
+      var fence = global.CurrentWriteFence.get();
       if (!fence || fence.fired)
         return;
 

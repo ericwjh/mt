@@ -1,6 +1,6 @@
 var _ = require('underscore')
 var EJSON = require('../ejson/ejson')
-var DiffSequence = require('../diff-sequence/diff')
+var DiffSequence = require('../diff-sequence')
 // XXX type checking on selectors (graceful error if malformed)
 
 // LocalCollection: a set of documents that supports queries and modifiers.
@@ -10,7 +10,7 @@ var DiffSequence = require('../diff-sequence/diff')
 
 // ObserveHandle: the return value of a live query.
 
-global.LocalCollection = function (name) {
+var LocalCollection = function (name) {
   var self = this;
   self.name = name;
   // _id -> document (also containing id)
@@ -245,7 +245,7 @@ LocalCollection.Cursor.prototype._publishCursor = function (sub) {
   //   throw new Error("Can't publish from Minimongo without the `mongo` package.");
   // }
   var Mongo = require('../mongo/collection.js')
-
+  console.trace()
   return Mongo.Collection._publishCursor(self, sub, collection);
 };
 

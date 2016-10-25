@@ -1,4 +1,7 @@
 var _ = require('underscore')
+var MaxHeap = require('./max-heap')
+var MinHeap = require('./min-heap')
+
 // This implementation of Min/Max-Heap is just a subclass of Max-Heap
 // with a Min-Heap as an encapsulated property.
 //
@@ -11,13 +14,13 @@ var _ = require('underscore')
 // (http://www.cs.otago.ac.nz/staffpriv/mike/Papers/MinMaxHeaps/MinMaxHeaps.pdf)
 // and Interval Heaps
 // (http://www.cise.ufl.edu/~sahni/dsaac/enrich/c13/double.htm)
-global.MinMaxHeap = function (comparator, options) {
+var MinMaxHeap = function (comparator, options) {
   var self = this;
 
   MaxHeap.call(self, comparator, options);
   self._minHeap = new MinHeap(comparator, options);
 };
-
+module.exports = MinMaxHeap
 Meteor._inherits(MinMaxHeap, MaxHeap);
 
 _.extend(MinMaxHeap.prototype, {

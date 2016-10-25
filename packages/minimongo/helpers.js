@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var Selector = require('./selector')
 // Like _.isArray, but doesn't regard polyfilled Uint8Arrays on old browsers as
 // arrays.
 // XXX maybe this should be EJSON.isArray
@@ -9,8 +10,8 @@ global.isArray = function (x) {
 // XXX maybe this should be EJSON.isObject, though EJSON doesn't know about
 // RegExp
 // XXX note that _type(undefined) === 3!!!!
-global.isPlainObject = LocalCollection._isPlainObject = function (x) {
-  return x && LocalCollection._f._type(x) === 3;
+global.isPlainObject = function (x) {
+  return x && Selector._f._type(x) === 3;
 };
 
 global.isIndexable = function (x) {

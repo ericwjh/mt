@@ -3,153 +3,6 @@ var EJSON = require('../ejson/ejson.js')
 var MongoID = require('../mongo-id/id.js')
 // The minimongo selector compiler!
 
-// Terminology:
-//  - a "selector" is the EJSON object representing a selector
-//  - a "matcher" is its compiled form (whether a full Minimongo.Matcher
-//    object or one of the component lambdas that matches parts of it)
-//  - a "result object" is an object with a "result" field and maybe
-//    distance and arrayIndices.
-//  - a "branched value" is an object with a "value" field and maybe
-//    "dontIterate" and "arrayIndices".
-//  - a "document" is a top-level object that can be stored in a collection.
-//  - a "lookup function" is a function that takes in a document and returns
-//    an array of "branched values".
-//  - a "branched matcher" maps from an array of branched values to a result
-//    object.
-//  - an "element matcher" maps from a single value to a bool.
-
-// Main entry point.
-//   var matcher = new Minimongo.Matcher({a: {$gt: 5}});
-//   if (matcher.documentMatches({a: 7})) ...
-Minimongo.Matcher = function (selector) {
-  var self = this;
-  // A set (object mapping string -> *) of all of the document paths looked
-  // at by the selector. Also includes the empty string if it may look at any
-  // path (eg, $where).
-  self._paths = {};
-  // Set to true if compilation finds a $near.
-  self._hasGeoQuery = false;
-  // Set to true if compilation finds a $where.
-  self._hasWhere = false;
-  // Set to false if compilation finds anything other than a simple equality or
-  // one or more of '$gt', '$gte', '$lt', '$lte', '$ne', '$in', '$nin' used with
-  // scalars as operands.
-  self._isSimple = true;
-  // Set to a dummy document which always matches this Matcher. Or set to null
-  // if such document is too hard to find.
-  self._matchingDocument = undefined;
-  // A clone of the original selector. It may just be a function if the user
-  // passed in a function; otherwise is definitely an object (eg, IDs are
-  // translated into {_id: ID} first. Used by canBecomeTrueByModifier and
-  // Sorter._useWithMatcher.
-  self._selector = null;
-  self._docMatcher = self._compileSelector(selector);
-};
-
-_.extend(Minimongo.Matcher.prototype, {
-  documentMatches: function (doc) {
-    if (!doc || typeof doc !== "object") {
-      throw Error("documentMatches needs a document");
-    }
-    return this._docMatcher(doc);
-  },
-  hasGeoQuery: function () {
-    return this._hasGeoQuery;
-  },
-  hasWhere: function () {
-    return this._hasWhere;
-  },
-  isSimple: function () {
-    return this._isSimple;
-  },
-
-  // Given a selector, return a function that takes one argument, a
-  // document. It returns a result object.
-  _compileSelector: function (selector) {
-    var self = this;
-    // you can pass a literal function instead of a selector
-    if (selector instanceof Function) {
-      self._isSimple = false;
-      self._selector = selector;
-      self._recordPathUsed('');
-      return function (doc) {
-        return {result: !!selector.call(doc)};
-      };
-    }
-
-    // shorthand -- scalars match _id
-    if (LocalCollection._selectorIsId(selector)) {
-      self._selector = {_id: selector};
-      self._recordPathUsed('_id');
-      return function (doc) {
-        return {result: EJSON.equals(doc._id, selector)};
-      };
-    }
-
-    // protect against dangerous selectors.  falsey and {_id: falsey} are both
-    // likely programmer error, and not what you want, particularly for
-    // destructive operations.
-    if (!selector || (('_id' in selector) && !selector._id)) {
-      self._isSimple = false;
-      return nothingMatcher;
-    }
-
-    // Top level can't be an array or true or binary.
-    if (typeof(selector) === 'boolean' || isArray(selector) ||
-        EJSON.isBinary(selector))
-      throw new Error("Invalid selector: " + selector);
-
-    self._selector = EJSON.clone(selector);
-    return compileDocumentSelector(selector, self, {isRoot: true});
-  },
-  _recordPathUsed: function (path) {
-    this._paths[path] = true;
-  },
-  // Returns a list of key paths the given selector is looking for. It includes
-  // the empty string if there is a $where.
-  _getPaths: function () {
-    return _.keys(this._paths);
-  }
-});
-
-
-// Takes in a selector that could match a full document (eg, the original
-// selector). Returns a function mapping document->result object.
-//
-// matcher is the Matcher object we are compiling.
-//
-// If this is the root document selector (ie, not wrapped in $and or the like),
-// then isRoot is true. (This is used by $near.)
-var compileDocumentSelector = function (docSelector, matcher, options) {
-  options = options || {};
-  var docMatchers = [];
-  _.each(docSelector, function (subSelector, key) {
-    if (key.substr(0, 1) === '$') {
-      // Outer operators are either logical operators (they recurse back into
-      // this function), or $where.
-      if (!_.has(LOGICAL_OPERATORS, key))
-        throw new Error("Unrecognized logical operator: " + key);
-      matcher._isSimple = false;
-      docMatchers.push(LOGICAL_OPERATORS[key](subSelector, matcher,
-                                              options.inElemMatch));
-    } else {
-      // Record this path, but only if we aren't in an elemMatcher, since in an
-      // elemMatch this is a path inside an object in an array, not in the doc
-      // root.
-      if (!options.inElemMatch)
-        matcher._recordPathUsed(key);
-      var lookUpByIndex = makeLookupFunction(key);
-      var valueMatcher =
-        compileValueSelector(subSelector, matcher, options.isRoot);
-      docMatchers.push(function (doc) {
-        var branchValues = lookUpByIndex(doc);
-        return valueMatcher(branchValues);
-      });
-    }
-  });
-
-  return andDocumentMatchers(docMatchers);
-};
 
 // Takes in a selector that could match a key-indexed value in a document; eg,
 // {$gt: 5, $lt: 9}, or a regular expression, or any non-expression object (to
@@ -167,6 +20,8 @@ var compileValueSelector = function (valueSelector, matcher, isRoot) {
       equalityElementMatcher(valueSelector));
   }
 };
+
+exports.compileValueSelector = compileValueSelector
 
 // Given an element matcher (which evaluates a single value), returns a branched
 // value (which evaluates the element matcher on all the branches and returns a
@@ -207,7 +62,7 @@ var convertElementMatcherToBranchedMatcher = function (
 };
 
 // Takes a RegExp object and returns an element matcher.
-global.regexpElementMatcher = function (regexp) {
+exports.regexpElementMatcher = function (regexp) {
   return function (value) {
     if (value instanceof RegExp) {
       // Comparing two regexps means seeing if the regexps are identical
@@ -231,7 +86,7 @@ global.regexpElementMatcher = function (regexp) {
 
 // Takes something that is not an operator object and returns an element matcher
 // for equality with that thing.
-global.equalityElementMatcher = function (elementSelector) {
+var equalityElementMatcher = function (elementSelector) {
   if (isOperatorObject(elementSelector))
     throw Error("Can't create equalityValueSelector for operator object");
 
@@ -245,10 +100,10 @@ global.equalityElementMatcher = function (elementSelector) {
   }
 
   return function (value) {
-    return LocalCollection._f._equal(elementSelector, value);
+    return _f._equal(elementSelector, value);
   };
 };
-
+exports.equalityElementMatcher = equalityElementMatcher
 // Takes an operator object (an object with $ keys) and returns a branched
 // matcher for it.
 var operatorBranchedMatcher = function (valueSelector, matcher, isRoot) {
@@ -539,16 +394,16 @@ var makeInequality = function (cmpValueComparator) {
       if (operand === undefined)
         operand = null;
 
-      var operandType = LocalCollection._f._type(operand);
+      var operandType = _f._type(operand);
 
       return function (value) {
         if (value === undefined)
           value = null;
         // Comparisons are never true among things of different type (except
         // null vs undefined).
-        if (LocalCollection._f._type(value) !== operandType)
+        if (_f._type(value) !== operandType)
           return false;
-        return cmpValueComparator(LocalCollection._f._cmp(value, operand));
+        return cmpValueComparator(_f._cmp(value, operand));
       };
     }
   };
@@ -566,7 +421,7 @@ var makeInequality = function (cmpValueComparator) {
 //    being called
 //  - dontIncludeLeafArrays, a bool which causes an argument to be passed to
 //    expandArraysInBranches if it is called
-global.ELEMENT_OPERATORS = {
+exports.ELEMENT_OPERATORS = {
   $lt: makeInequality(function (cmpValue) {
     return cmpValue < 0;
   }),
@@ -648,7 +503,7 @@ global.ELEMENT_OPERATORS = {
         throw Error("$type needs a number");
       return function (value) {
         return value !== undefined
-          && LocalCollection._f._type(value) === operand;
+          && _f._type(value) === operand;
       };
     }
   },
@@ -779,7 +634,7 @@ global.ELEMENT_OPERATORS = {
 //
 // See the test 'minimongo - lookup' for some examples of what lookup functions
 // return.
-global.makeLookupFunction = function (key, options) {
+exports.makeLookupFunction = function (key, options) {
   options = options || {};
   var parts = key.split('.');
   var firstPart = parts.length ? parts[0] : '';
@@ -890,9 +745,9 @@ global.makeLookupFunction = function (key, options) {
     return result;
   };
 };
-MinimongoTest.makeLookupFunction = makeLookupFunction;
+// MinimongoTest.makeLookupFunction = makeLookupFunction;
 
-global.expandArraysInBranches = function (branches, skipTheArrays) {
+var expandArraysInBranches = function (branches, skipTheArrays) {
   var branchesOut = [];
   _.each(branches, function (branch) {
     var thisIsArray = isArray(branch.value);
@@ -917,62 +772,62 @@ global.expandArraysInBranches = function (branches, skipTheArrays) {
   });
   return branchesOut;
 };
+exports.expandArraysInBranches = expandArraysInBranches
+// var nothingMatcher = function (docOrBranchedValues) {
+//   return {result: false};
+// };
 
-var nothingMatcher = function (docOrBranchedValues) {
-  return {result: false};
-};
-
-var everythingMatcher = function (docOrBranchedValues) {
-  return {result: true};
-};
+// var everythingMatcher = function (docOrBranchedValues) {
+//   return {result: true};
+// };
 
 
-// NB: We are cheating and using this function to implement "AND" for both
-// "document matchers" and "branched matchers". They both return result objects
-// but the argument is different: for the former it's a whole doc, whereas for
-// the latter it's an array of "branched values".
-var andSomeMatchers = function (subMatchers) {
-  if (subMatchers.length === 0)
-    return everythingMatcher;
-  if (subMatchers.length === 1)
-    return subMatchers[0];
+// // NB: We are cheating and using this function to implement "AND" for both
+// // "document matchers" and "branched matchers". They both return result objects
+// // but the argument is different: for the former it's a whole doc, whereas for
+// // the latter it's an array of "branched values".
+// var andSomeMatchers = function (subMatchers) {
+//   if (subMatchers.length === 0)
+//     return everythingMatcher;
+//   if (subMatchers.length === 1)
+//     return subMatchers[0];
 
-  return function (docOrBranches) {
-    var ret = {};
-    ret.result = _.all(subMatchers, function (f) {
-      var subResult = f(docOrBranches);
-      // Copy a 'distance' number out of the first sub-matcher that has
-      // one. Yes, this means that if there are multiple $near fields in a
-      // query, something arbitrary happens; this appears to be consistent with
-      // Mongo.
-      if (subResult.result && subResult.distance !== undefined
-          && ret.distance === undefined) {
-        ret.distance = subResult.distance;
-      }
-      // Similarly, propagate arrayIndices from sub-matchers... but to match
-      // MongoDB behavior, this time the *last* sub-matcher with arrayIndices
-      // wins.
-      if (subResult.result && subResult.arrayIndices) {
-        ret.arrayIndices = subResult.arrayIndices;
-      }
-      return subResult.result;
-    });
+//   return function (docOrBranches) {
+//     var ret = {};
+//     ret.result = _.all(subMatchers, function (f) {
+//       var subResult = f(docOrBranches);
+//       // Copy a 'distance' number out of the first sub-matcher that has
+//       // one. Yes, this means that if there are multiple $near fields in a
+//       // query, something arbitrary happens; this appears to be consistent with
+//       // Mongo.
+//       if (subResult.result && subResult.distance !== undefined
+//           && ret.distance === undefined) {
+//         ret.distance = subResult.distance;
+//       }
+//       // Similarly, propagate arrayIndices from sub-matchers... but to match
+//       // MongoDB behavior, this time the *last* sub-matcher with arrayIndices
+//       // wins.
+//       if (subResult.result && subResult.arrayIndices) {
+//         ret.arrayIndices = subResult.arrayIndices;
+//       }
+//       return subResult.result;
+//     });
 
-    // If we didn't actually match, forget any extra metadata we came up with.
-    if (!ret.result) {
-      delete ret.distance;
-      delete ret.arrayIndices;
-    }
-    return ret;
-  };
-};
+//     // If we didn't actually match, forget any extra metadata we came up with.
+//     if (!ret.result) {
+//       delete ret.distance;
+//       delete ret.arrayIndices;
+//     }
+//     return ret;
+//   };
+// };
 
-var andDocumentMatchers = andSomeMatchers;
-var andBranchedMatchers = andSomeMatchers;
+// var andDocumentMatchers = andSomeMatchers;
+// var andBranchedMatchers = andSomeMatchers;
 
 
 // helpers used by compiled selector code
-LocalCollection._f = {
+var _f = {
   // XXX for _all and _in, consider building 'inquery' at compile time..
 
   _type: function (v) {
@@ -1051,10 +906,10 @@ LocalCollection._f = {
       return b === undefined ? 0 : -1;
     if (b === undefined)
       return 1;
-    var ta = LocalCollection._f._type(a);
-    var tb = LocalCollection._f._type(b);
-    var oa = LocalCollection._f._typeorder(ta);
-    var ob = LocalCollection._f._typeorder(tb);
+    var ta =  _f._type(a);
+    var tb = _f._type(b);
+    var oa = _f._typeorder(ta);
+    var ob = _f._typeorder(tb);
     if (oa !== ob)
       return oa < ob ? -1 : 1;
     if (ta !== tb)
@@ -1088,7 +943,7 @@ LocalCollection._f = {
         }
         return ret;
       };
-      return LocalCollection._f._cmp(to_array(a), to_array(b));
+      return _f._cmp(to_array(a), to_array(b));
     }
     if (ta === 4) { // Array
       for (var i = 0; ; i++) {
@@ -1096,7 +951,7 @@ LocalCollection._f = {
           return (i === b.length) ? 0 : -1;
         if (i === b.length)
           return 1;
-        var s = LocalCollection._f._cmp(a[i], b[i]);
+        var s = _f._cmp(a[i], b[i]);
         if (s !== 0)
           return s;
       }
@@ -1135,9 +990,9 @@ LocalCollection._f = {
     throw Error("Unknown type to sort");
   }
 };
-
+exports._f = _f
 // Oddball function used by upsert.
-LocalCollection._removeDollarOperators = function (selector) {
+exports._removeDollarOperators = function (selector) {
   var selectorDoc = {};
   for (var k in selector)
     if (k.substr(0, 1) !== '$')

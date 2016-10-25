@@ -1,5 +1,11 @@
 var _ = require('underscore')
 var MongoID = require('../mongo-id/id.js')
+var Random = require('../random/random.js')
+var AllowDeny = require('../../client/allow-deny')
+var CurrentInvocation = require('../ddp-common/CurrentInvocation')
+var randomStream = require('../ddp-client/random_stream')
+var wrapTransform = require('../minimongo/wrap_transform')
+var objectid = require('../minimongo/objectid')
 var autopublish = true
 // options.connection, if given, is a LivedataClient or LivedataServer
 // XXX presently there is no way to destroy/clean up a Collection
@@ -27,10 +33,10 @@ The default id generation technique is `'STRING'`.
  * @param {Function} options.transform An optional transformation function. Documents will be passed through this function before being returned from `fetch` or `findOne`, and before being passed to callbacks of `observe`, `map`, `forEach`, `allow`, and `deny`. Transforms are *not* applied for the callbacks of `observeChanges` or to cursors returned from publish functions.
  * @param {Boolean} options.defineMutationMethods Set to `false` to skip setting up the mutation methods that enable insert/update/remove from client code. Default `true`.
  */
-module.exports = Mongo.Collection = function (name, options) {
+var Collection = function (name, options) {
   var self = this;
-  if (! (self instanceof Mongo.Collection))
-    throw new Error('use "new" to varruct a Mongo.Collection');
+  if (! (self instanceof Collection))
+    throw new Error('use "new" to varruct a Collection');
 
   if (!name && (name !== null)) {
     Meteor._debug("Warning: creating anonymous collection. It will not be " +
@@ -41,7 +47,7 @@ module.exports = Mongo.Collection = function (name, options) {
 
   if (name !== null && typeof name !== "string") {
     throw new Error(
-      "First argument to new Mongo.Collection must be a string or null");
+      "First argument to new Collection must be a string or null");
   }
 
   if (options && options.methods) {
@@ -60,14 +66,14 @@ module.exports = Mongo.Collection = function (name, options) {
     idGeneration: 'STRING',
     transform: null,
     _driver: undefined,
-    _preventAutopublish: false
+    is_auto: false
   }, options);
 
   switch (options.idGeneration) {
   case 'MONGO':
     self._makeNewID = function () {
       var src = name
-            ? DDP.randomStream('/collection/' + name)
+            ? randomStream('/collection/' + name)
             : Random.insecure;
       return new Mongo.ObjectID(src.hexString(24));
     };
@@ -76,14 +82,14 @@ module.exports = Mongo.Collection = function (name, options) {
   default:
     self._makeNewID = function () {
       var src = name
-            ? DDP.randomStream('/collection/' + name)
+            ? randomStream('/collection/' + name)
             : Random.insecure;
       return src.id();
     };
     break;
   }
 
-  self._transform = LocalCollection.wrapTransform(options.transform);
+  self._transform = wrapTransform(options.transform);
 
   // if (! name || options.connection === null)
   if (! name) {
@@ -94,17 +100,17 @@ module.exports = Mongo.Collection = function (name, options) {
     self._connection = options.connection;
   }
   else if (Meteor.isClient){
-    self._connection = Meteor.connection;
+    self._connection = global.connection;
   }
-  else{
-    self._connection = Meteor.server;
+  else {
+    self._connection = global.server;
   }
   if (!options._driver) {
-    // XXX This check assumes that webapp is loaded so that Meteor.server !==
+    // XXX This check assumes that webapp is loaded so that global.server !==
     // null. We should fully support the case of "want to use a Mongo-backed
     // collection from Node code without webapp", but we don't yet.
     // #MeteorServerNull
-    if (name && self._connection === Meteor.server &&
+    if (name && self._connection === global.server &&
         typeof MongoInternals !== "undefined" &&
         MongoInternals.defaultRemoteCollectionDriver) {
       options._driver = MongoInternals.defaultRemoteCollectionDriver();
@@ -117,6 +123,7 @@ module.exports = Mongo.Collection = function (name, options) {
   self._name = name;
   self._driver = options._driver;
   if (self._connection && self._connection.registerStore) {
+      console.trace()
     // OK, we're going to be a slave, replicating some remote
     // database, except possibly with some temporary divergence while
     // we have unacknowledged RPC's.
@@ -237,7 +244,6 @@ module.exports = Mongo.Collection = function (name, options) {
       }
     }
   }
-
   // XXX don't define these until allow or deny is actually used for this
   // collection. Could be hard if the security rules are only defined on the
   // server.
@@ -247,9 +253,7 @@ module.exports = Mongo.Collection = function (name, options) {
       // if (error.message === "A method named '/"+name+"/insert' is already defined")
       //   throw new Error(`There is already a collection named "${name}"`);
   }
-
-  // autopublish
-  if (autopublish && !options._preventAutopublish && self._connection
+  if (options.is_auto && self._connection
       && self._connection.publish) {
     self._connection.publish(null, function () {
       return self.find();
@@ -261,8 +265,9 @@ module.exports = Mongo.Collection = function (name, options) {
 /// Main collection API
 ///
 
+module.exports =  Collection
 
-_.extend(Mongo.Collection.prototype, {
+_.extend(Collection.prototype, {
 
   _getFindSelector: function (args) {
     if (args.length == 0)
@@ -293,7 +298,7 @@ _.extend(Mongo.Collection.prototype, {
    * @summary Find the documents in a collection that match the selector.
    * @locus Anywhere
    * @method find
-   * @memberOf Mongo.Collection
+   * @memberOf Collection
    * @instance
    * @param {MongoSelector} [selector] A query describing the documents to find
    * @param {Object} [options]
@@ -322,7 +327,7 @@ _.extend(Mongo.Collection.prototype, {
    * @summary Finds the first document that matches the selector, as ordered by sort and skip options.
    * @locus Anywhere
    * @method findOne
-   * @memberOf Mongo.Collection
+   * @memberOf Collection
    * @instance
    * @param {MongoSelector} [selector] A query describing the documents to find
    * @param {Object} [options]
@@ -342,7 +347,7 @@ _.extend(Mongo.Collection.prototype, {
 
 });
 
-Mongo.Collection._publishCursor = function (cursor, sub, collection) {
+Collection._publishCursor = function (cursor, sub, collection) {
   var observeHandle = cursor.observeChanges({
     added: function (id, fields) {
       sub.added(collection, id, fields);
@@ -369,9 +374,9 @@ Mongo.Collection._publishCursor = function (cursor, sub, collection) {
 // likely programmer error, and not what you want, particularly for destructive
 // operations.  JS regexps don't serialize over DDP but can be trivially
 // replaced by $regex.
-Mongo.Collection._rewriteSelector = function (selector) {
+Collection._rewriteSelector = function (selector) {
   // shorthand -- scalars match _id
-  if (LocalCollection._selectorIsId(selector))
+  if (objectid._selectorIsId(selector))
     selector = {_id: selector};
 
   if (_.isArray(selector)) {
@@ -399,7 +404,7 @@ Mongo.Collection._rewriteSelector = function (selector) {
     else if (_.contains(['$or','$and','$nor'], key)) {
       // Translate lower levels of $and/$or/$nor
       ret[key] = _.map(value, function (v) {
-        return Mongo.Collection._rewriteSelector(v);
+        return Collection._rewriteSelector(v);
       });
     } else {
       ret[key] = value;
@@ -461,12 +466,12 @@ function convertRegexpToMongoSelector(regexp) {
  * @summary Insert a document in the collection.  Returns its unique _id.
  * @locus Anywhere
  * @method  insert
- * @memberOf Mongo.Collection
+ * @memberOf Collection
  * @instance
  * @param {Object} doc The document to insert. May not yet have an _id attribute, in which case Meteor will generate one for you.
  * @param {Function} [callback] Optional.  If present, called with an error object as the first argument and, if no error, the _id as the second.
  */
-Mongo.Collection.prototype.insert = function insert(doc, callback) {
+Collection.prototype.insert = function insert(doc, callback) {
   // Make sure we were passed a document to insert
   if (!doc) {
     throw new Error("insert requires an argument");
@@ -487,7 +492,7 @@ Mongo.Collection.prototype.insert = function insert(doc, callback) {
     // This optimization saves us passing both the randomSeed and the id
     // Passing both is redundant.
     if (this._isRemoteCollection()) {
-      var enclosing = DDP._CurrentInvocation.get();
+      var enclosing = CurrentInvocation.get();
       if (!enclosing) {
         generateId = false;
       }
@@ -542,7 +547,7 @@ Mongo.Collection.prototype.insert = function insert(doc, callback) {
  * @summary Modify one or more documents in the collection. Returns the number of affected documents.
  * @locus Anywhere
  * @method update
- * @memberOf Mongo.Collection
+ * @memberOf Collection
  * @instance
  * @param {MongoSelector} selector Specifies which documents to modify
  * @param {MongoModifier} modifier Specifies how to modify the documents
@@ -551,11 +556,11 @@ Mongo.Collection.prototype.insert = function insert(doc, callback) {
  * @param {Boolean} options.upsert True to insert a document if no matching documents are found.
  * @param {Function} [callback] Optional.  If present, called with an error object as the first argument and, if no error, the number of affected documents as the second.
  */
-Mongo.Collection.prototype.update = function update(selector, modifier) {
+Collection.prototype.update = function update(selector, modifier) {
   var optionsAndCallback = [arguments[2],arguments[3]]
   var callback = popCallbackFromArgs(optionsAndCallback);
 
-  selector = Mongo.Collection._rewriteSelector(selector);
+  selector = Collection._rewriteSelector(selector);
 
   // We've already popped off the callback, so we are left with an array
   // of one or zero items
@@ -579,7 +584,6 @@ Mongo.Collection.prototype.update = function update(selector, modifier) {
       modifier,
       options
     ];
-
     return this._callMutatorMethod("update", args, wrappedCallback);
   }
 
@@ -604,13 +608,13 @@ Mongo.Collection.prototype.update = function update(selector, modifier) {
  * @summary Remove documents from the collection
  * @locus Anywhere
  * @method remove
- * @memberOf Mongo.Collection
+ * @memberOf Collection
  * @instance
  * @param {MongoSelector} selector Specifies which documents to remove
  * @param {Function} [callback] Optional.  If present, called with an error object as its argument.
  */
-Mongo.Collection.prototype.remove = function remove(selector, callback) {
-  selector = Mongo.Collection._rewriteSelector(selector);
+Collection.prototype.remove = function remove(selector, callback) {
+  selector = Collection._rewriteSelector(selector);
 
   var wrappedCallback = wrapCallback(callback);
 
@@ -636,9 +640,9 @@ Mongo.Collection.prototype.remove = function remove(selector, callback) {
 
 // Determine if this collection is simply a minimongo representation of a real
 // database on another server
-Mongo.Collection.prototype._isRemoteCollection = function _isRemoteCollection() {
+Collection.prototype._isRemoteCollection = function _isRemoteCollection() {
   // XXX see #MeteorServerNull
-  return this._connection && this._connection !== Meteor.server;
+  return this._connection && this._connection !== global.server;
 }
 
 // Convert the callback to not return a result if there is an error
@@ -664,7 +668,7 @@ function wrapCallback(callback, convertResult) {
  * @param {Boolean} options.multi True to modify all matching documents; false to only modify one of the matching documents (the default).
  * @param {Function} [callback] Optional.  If present, called with an error object as the first argument and, if no error, the number of affected documents as the second.
  */
-Mongo.Collection.prototype.upsert = function upsert(
+Collection.prototype.upsert = function upsert(
     selector, modifier, options, callback) {
   if (! callback && typeof options === "function") {
     callback = options;
@@ -681,25 +685,25 @@ Mongo.Collection.prototype.upsert = function upsert(
 
 // We'll actually design an index API later. For now, we just pass through to
 // Mongo's, but make it synchronous.
-Mongo.Collection.prototype._ensureIndex = function (index, options) {
+Collection.prototype._ensureIndex = function (index, options) {
   var self = this;
   if (!self._collection._ensureIndex)
     throw new Error("Can only call _ensureIndex on server collections");
   self._collection._ensureIndex(index, options);
 };
-Mongo.Collection.prototype._dropIndex = function (index) {
+Collection.prototype._dropIndex = function (index) {
   var self = this;
   if (!self._collection._dropIndex)
     throw new Error("Can only call _dropIndex on server collections");
   self._collection._dropIndex(index);
 };
-Mongo.Collection.prototype._dropCollection = function () {
+Collection.prototype._dropCollection = function () {
   var self = this;
   if (!self._collection.dropCollection)
     throw new Error("Can only call _dropCollection on server collections");
   self._collection.dropCollection();
 };
-Mongo.Collection.prototype._createCappedCollection = function (byteSize, maxDocuments) {
+Collection.prototype._createCappedCollection = function (byteSize, maxDocuments) {
   var self = this;
   if (!self._collection._createCappedCollection)
     throw new Error("Can only call _createCappedCollection on server collections");
@@ -707,10 +711,10 @@ Mongo.Collection.prototype._createCappedCollection = function (byteSize, maxDocu
 };
 
 /**
- * @summary Returns the [`Collection`](http://mongodb.github.io/node-mongodb-native/1.4/api-generated/collection.html) object corresponding to this collection from the [npm `mongodb` driver module](https://www.npmjs.com/package/mongodb) which is wrapped by `Mongo.Collection`.
+ * @summary Returns the [`Collection`](http://mongodb.github.io/node-mongodb-native/1.4/api-generated/collection.html) object corresponding to this collection from the [npm `mongodb` driver module](https://www.npmjs.com/package/mongodb) which is wrapped by `Collection`.
  * @locus Server
  */
-Mongo.Collection.prototype.rawCollection = function () {
+Collection.prototype.rawCollection = function () {
   var self = this;
   if (! self._collection.rawCollection) {
     throw new Error("Can only call rawCollection on server collections");
@@ -719,10 +723,10 @@ Mongo.Collection.prototype.rawCollection = function () {
 };
 
 /**
- * @summary Returns the [`Db`](http://mongodb.github.io/node-mongodb-native/1.4/api-generated/db.html) object corresponding to this collection's database connection from the [npm `mongodb` driver module](https://www.npmjs.com/package/mongodb) which is wrapped by `Mongo.Collection`.
+ * @summary Returns the [`Db`](http://mongodb.github.io/node-mongodb-native/1.4/api-generated/db.html) object corresponding to this collection's database connection from the [npm `mongodb` driver module](https://www.npmjs.com/package/mongodb) which is wrapped by `Collection`.
  * @locus Server
  */
-Mongo.Collection.prototype.rawDatabase = function () {
+Collection.prototype.rawDatabase = function () {
   var self = this;
   if (! (self._driver.mongo && self._driver.mongo.db)) {
     throw new Error("Can only call rawDatabase on server collections");
@@ -744,22 +748,22 @@ Mongo.ObjectID = MongoID.ObjectID;
  * @class
  * @instanceName cursor
  */
-Mongo.Cursor = LocalCollection.Cursor;
+Mongo.Cursor = require('../minimongo/Cursor');
 
 /**
  * @deprecated in 0.9.1
  */
-Mongo.Collection.Cursor = Mongo.Cursor;
+Collection.Cursor = Mongo.Cursor;
 
 /**
  * @deprecated in 0.9.1
  */
-Mongo.Collection.ObjectID = Mongo.ObjectID;
+Collection.ObjectID = Mongo.ObjectID;
 
 /**
  * @deprecated in 0.9.1
  */
-Meteor.Collection = Mongo.Collection;
+Meteor.Collection = Collection;
 
 // Allow deny stuff is now in the allow-deny package
 _.extend(Meteor.Collection.prototype, AllowDeny.CollectionPrototype);

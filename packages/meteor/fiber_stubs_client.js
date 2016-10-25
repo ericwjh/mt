@@ -12,6 +12,7 @@ Meteor._noYieldsAllowed = function (f) {
 // runs all the tasks when you call runTask or flush, synchronously.
 //
 Meteor._SynchronousQueue = function () {
+  console.trace()
   var self = this;
   self._tasks = [];
   self._running = false;

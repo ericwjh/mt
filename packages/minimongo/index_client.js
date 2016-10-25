@@ -1,4 +1,5 @@
-require('./minimongo.js')
+// require('./minimongo.js')
+require('./LocalCollection')
 require('./wrap_transform.js')
 require('./helpers.js')
 require('./selector.js')

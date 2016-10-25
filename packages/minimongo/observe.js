@@ -1,6 +1,8 @@
 var MongoID = require('../mongo-id/id')
 var EJSON = require('../ejson/ejson')
 var _ =   require('underscore');
+var DiffSequence = require('../diff-sequence')
+var _IdMap = require('./id_map')
 // XXX maybe move these into another ObserveHelpers package or something
 
 // _CachingChangeObserver is an object which receives observeChanges callbacks
@@ -10,12 +12,12 @@ var _ =   require('underscore');
 // call. Optionally, you can specify your own observeChanges callbacks which are
 // invoked immediately before the docs field is updated; this object is made
 // available as `this` to those callbacks.
-LocalCollection._CachingChangeObserver = function (options) {
+var _CachingChangeObserver = function (options) {
   var self = this;
   options = options || {};
 
   var orderedFromCallbacks = options.callbacks &&
-        LocalCollection._observeChangesCallbacksAreOrdered(options.callbacks);
+        _observeChangesCallbacksAreOrdered(options.callbacks);
   if (_.has(options, 'ordered')) {
     self.ordered = options.ordered;
     if (options.callbacks && options.ordered !== orderedFromCallbacks)
@@ -49,7 +51,7 @@ LocalCollection._CachingChangeObserver = function (options) {
       }
     };
   } else {
-    self.docs = new LocalCollection._IdMap;
+    self.docs = new _IdMap;
     self.applyChange = {
       added: function (id, fields) {
         var doc = EJSON.clone(fields);
@@ -75,13 +77,34 @@ LocalCollection._CachingChangeObserver = function (options) {
     self.docs.remove(id);
   };
 };
+exports._CachingChangeObserver = _CachingChangeObserver
 
-LocalCollection._observeFromObserveChanges = function (cursor, observeCallbacks) {
+function _observeChangesCallbacksAreOrdered(callbacks) {
+  if (callbacks.added && callbacks.addedBefore)
+    throw new Error("Please specify only one of added() and addedBefore()");
+  return !!(callbacks.addedBefore || callbacks.movedBefore);
+};
+
+exports._observeChangesCallbacksAreOrdered = _observeChangesCallbacksAreOrdered
+
+function _observeCallbacksAreOrdered (callbacks) {
+  if (callbacks.addedAt && callbacks.added)
+    throw new Error("Please specify only one of added() and addedAt()");
+  if (callbacks.changedAt && callbacks.changed)
+    throw new Error("Please specify only one of changed() and changedAt()");
+  if (callbacks.removed && callbacks.removedAt)
+    throw new Error("Please specify only one of removed() and removedAt()");
+
+  return !!(callbacks.addedAt || callbacks.movedTo || callbacks.changedAt
+            || callbacks.removedAt);
+};
+
+exports._observeFromObserveChanges = function (cursor, observeCallbacks) {
   var transform = cursor.getTransform() || function (doc) {return doc;};
   var suppressed = !!observeCallbacks._suppress_initial;
 
   var observeChangesCallbacks;
-  if (LocalCollection._observeCallbacksAreOrdered(observeCallbacks)) {
+  if (_observeCallbacksAreOrdered(observeCallbacks)) {
     // The "_no_indices" option sets all index arguments to -1 and skips the
     // linear scans required to generate them.  This lets observers that don't
     // need absolute indices benefit from the other features of this API --
@@ -175,7 +198,7 @@ LocalCollection._observeFromObserveChanges = function (cursor, observeCallbacks)
     };
   }
 
-  var changeObserver = new LocalCollection._CachingChangeObserver(
+  var changeObserver = new _CachingChangeObserver(
     {callbacks: observeChangesCallbacks});
   var handle = cursor.observeChanges(changeObserver.applyChange);
   suppressed = false;

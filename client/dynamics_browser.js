@@ -9,6 +9,7 @@ Meteor.EnvironmentVariable = function () {
 
 _.extend(Meteor.EnvironmentVariable.prototype, {
   get: function get() {
+    console.trace()
     return currentValues[this.slot];
   },
 

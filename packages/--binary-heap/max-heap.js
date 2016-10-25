@@ -10,7 +10,7 @@ var _ = require('underscore')
 //      each value is retained
 //   - IdMap - Constructor - Optional - custom IdMap class to store id->index
 //       mappings internally. Standard IdMap is used by default.
-global.MaxHeap = function (comparator, options) {
+var MaxHeap = function (comparator, options) {
   if (! _.isFunction(comparator))
     throw new Error('Passed comparator is invalid, should be a comparison function');
   var self = this;
@@ -39,6 +39,7 @@ global.MaxHeap = function (comparator, options) {
     self._initFromData(options.initData);
 };
 
+module.exports = MaxHeap
 _.extend(MaxHeap.prototype, {
   // Builds a new heap in-place in linear time based on passed data
   _initFromData: function (data) {

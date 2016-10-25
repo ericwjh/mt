@@ -1,3 +1,5 @@
+var Dependency = require('../tracker/Dependency')
+var computations = require('../tracker/computations')
 /*
  * ## [new] ReactiveVar(initialValue, [equalsFunc])
  *
@@ -41,7 +43,7 @@ var ReactiveVar = function (initialValue, equalsFunc) {
 
   this.curValue = initialValue;
   this.equalsFunc = equalsFunc;
-  this.dep = new Tracker.Dependency;
+  this.dep = new Dependency;
 };
 module.exports = ReactiveVar
 ReactiveVar._isEqual = function (oldValue, newValue) {
@@ -60,7 +62,7 @@ ReactiveVar._isEqual = function (oldValue, newValue) {
  * @locus Client
  */
 ReactiveVar.prototype.get = function () {
-  if (Tracker.active)
+  if (computations.active)
     this.dep.depend();
 
   return this.curValue;

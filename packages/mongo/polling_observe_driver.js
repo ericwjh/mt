@@ -1,5 +1,9 @@
 var _ =   require('underscore');
-module.exports = global.PollingObserveDriver = function (options) {
+var LocalCollection = require('../minimongo/LocalCollection')
+var _IdMap = require('../minimongo/id_map')
+var diff = require('../minimongo/diff')
+
+var PollingObserveDriver = function (options) {
   var self = this;
 
   self._cursorDescription = options.cursorDescription;
@@ -40,7 +44,7 @@ module.exports = global.PollingObserveDriver = function (options) {
       // When someone does a transaction that might affect us, schedule a poll
       // of the database. If that transaction happens inside of a write fence,
       // block the fence until we've polled and notified observers.
-      var fence = DDPServer._CurrentWriteFence.get();
+      var fence = global.CurrentWriteFence.get();
       if (fence)
         self._pendingWrites.push(fence.beginWrite());
       // Ensure a poll is scheduled... but if we already know that one is,
@@ -66,7 +70,7 @@ module.exports = global.PollingObserveDriver = function (options) {
           self._cursorDescription.options.pollingIntervalMs ||
           self._cursorDescription.options._pollingInterval || // COMPAT with 1.2
           10 * 1000;
-    var intervalHandle = Meteor.setInterval(
+    var intervalHandle = setInterval(
       _.bind(self._ensurePollIsScheduled, self), pollingInterval);
     self._stopCallbacks.push(function () {
       clearInterval(intervalHandle);
@@ -76,10 +80,10 @@ module.exports = global.PollingObserveDriver = function (options) {
   // Make sure we actually poll soon!
   self._unthrottledEnsurePollIsScheduled();
 
-  Package.facts && Package.facts.Facts.incrementServerFact(
-    "mongo-livedata", "observe-drivers-polling", 1);
+  // Package.facts && Package.facts.Facts.incrementServerFact(
+  //   "mongo-livedata", "observe-drivers-polling", 1);
 };
-
+module.exports = PollingObserveDriver
 _.extend(PollingObserveDriver.prototype, {
   // This is always called through _.throttle (except once at startup).
   _unthrottledEnsurePollIsScheduled: function () {
@@ -139,7 +143,7 @@ _.extend(PollingObserveDriver.prototype, {
     if (!oldResults) {
       first = true;
       // XXX maybe use OrderedDict instead?
-      oldResults = self._ordered ? [] : new LocalCollection._IdMap;
+      oldResults = self._ordered ? [] : new _IdMap;
     }
 
     self._testOnlyPollCallback && self._testOnlyPollCallback();
@@ -179,7 +183,7 @@ _.extend(PollingObserveDriver.prototype, {
 
     // Run diffs.
     if (!self._stopped) {
-      LocalCollection._diffQueryChanges(
+      diff._diffQueryChanges(
         self._ordered, oldResults, newResults, self._multiplexer);
     }
 
@@ -213,7 +217,7 @@ _.extend(PollingObserveDriver.prototype, {
     _.each(self._pendingWrites, function (w) {
       w.committed();
     });
-    Package.facts && Package.facts.Facts.incrementServerFact(
-      "mongo-livedata", "observe-drivers-polling", -1);
+    // Package.facts && Package.facts.Facts.incrementServerFact(
+    //   "mongo-livedata", "observe-drivers-polling", -1);
   }
 });
