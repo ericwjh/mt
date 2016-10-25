@@ -1,3 +1,6 @@
+var Dependency = require('../tracker/Dependency')
+var computations = require('../tracker/computations')
+
 // XXX come up with a serialization method which canonicalizes object key
 // order, which would allow us to use objects as values for equals.
 var stringify = function (value) {
@@ -36,7 +39,7 @@ ReactiveDict = function (dictName) {
     this.keys = {};
   }
 
-  this.allDeps = new Tracker.Dependency;
+  this.allDeps = new Dependency;
   this.keyDeps = {}; // key -> Dependency
   this.keyValueDeps = {}; // key -> Dependency
 };
@@ -132,15 +135,15 @@ _.extend(ReactiveDict.prototype, {
     }
     var serializedValue = stringify(value);
 
-    if (Tracker.active) {
+    if (computations.active) {
       self._ensureKey(key);
 
       if (! _.has(self.keyValueDeps[key], serializedValue))
-        self.keyValueDeps[key][serializedValue] = new Tracker.Dependency;
+        self.keyValueDeps[key][serializedValue] = new Dependency;
 
       var isNew = self.keyValueDeps[key][serializedValue].depend();
       if (isNew) {
-        Tracker.onInvalidate(function () {
+        computations.onInvalidate(function () {
           // clean up [key][serializedValue] if it's now empty, so we don't
           // use O(n) memory for n = values seen ever
           if (! self.keyValueDeps[key][serializedValue].hasDependents())
@@ -219,7 +222,7 @@ _.extend(ReactiveDict.prototype, {
   _ensureKey: function (key) {
     var self = this;
     if (!(key in self.keyDeps)) {
-      self.keyDeps[key] = new Tracker.Dependency;
+      self.keyDeps[key] = new Dependency;
       self.keyValueDeps[key] = {};
     }
   },

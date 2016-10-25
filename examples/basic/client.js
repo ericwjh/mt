@@ -19,7 +19,7 @@ L.remove({})
 global.A = A
 Tracker.autorun(function(){
   console.log(A.find().fetch())
-A.remove({b:1})
+// A.remove({b:1})
 
 })
 A.insert({b:1})

@@ -173,5 +173,5 @@ exports.onInvalidate = function (f) {
   if (! exports.active)
     throw new Error("Tracker.onInvalidate requires a currentComputation");
 
-  currentComputation.currentComputation.onInvalidate(f);
+  exports.currentComputation.onInvalidate(f);
 };

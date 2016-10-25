@@ -192,6 +192,8 @@ Computation.prototype._compute = function () {
   inCompute = true;
   try {
     self._func(self);
+  } catch(e){
+  	console.log(e)
   } finally {
     computations.setCurrentComputation(previous);
     inCompute = previousInCompute;

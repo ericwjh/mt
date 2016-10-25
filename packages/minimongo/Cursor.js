@@ -6,6 +6,9 @@ var objectid = require('./objectid')
 var _compileProjection = require('./projection')
 var wrapTransform = require('./wrap_transform')
 var observe = require('./observe')
+var computations = require('../tracker/computations');  
+var Dependency = require('../tracker/Dependency');  
+
 var Cursor = function (collection, selector, options) {
   var self = this;
   if (!options) options = {};
@@ -37,7 +40,7 @@ var Cursor = function (collection, selector, options) {
   self._transform = wrapTransform(options.transform);
 
   // by default, queries register w/ Tracker when it is available.
-  if (typeof Tracker !== "undefined")
+  // if (typeof Tracker !== "undefined")
     self.reactive = (options.reactive === undefined) ? true : options.reactive;
 };
 module.exports = Cursor
@@ -277,13 +280,13 @@ _.extend(Cursor.prototype, {
       }
     });
 
-    if (self.reactive && Tracker.active) {
+    if (self.reactive && computations.active) {
       // XXX in many cases, the same observe will be recreated when
       // the current autorun is rerun.  we could save work by
       // letting it linger across rerun and potentially get
       // repurposed if the same observe is performed, using logic
       // similar to that of Meteor.subscribe.
-      Tracker.onInvalidate(function () {
+      computations.onInvalidate(function () {
         handle.stop();
       });
     }
@@ -388,8 +391,8 @@ Cursor.prototype._getRawObjects = function (options) {
 Cursor.prototype._depend = function (changers, _allow_unordered) {
   var self = this;
 
-  if (Tracker.active) {
-    var v = new Tracker.Dependency;
+  if (computations.active) {
+    var v = new Dependency;
     v.depend();
     var notifyChange = _.bind(v.changed, v);
 
