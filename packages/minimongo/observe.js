@@ -1,5 +1,5 @@
-var MongoID = require('../mongo-id/id')
-var EJSON = require('../ejson/ejson')
+var MongoID = require('../mongo-id')
+var EJSON = require('../ejson')
 var _ =   require('underscore');
 var DiffSequence = require('../diff-sequence')
 var _IdMap = require('./id_map')

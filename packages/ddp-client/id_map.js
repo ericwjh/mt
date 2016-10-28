@@ -1,9 +1,12 @@
-var IdMap = require('../id-map/id-map.js')
-var MongoID = require('../mongo-id/id.js')
-var MongoIDMap = function () {
-  var self = this;
-  IdMap.call(self, MongoID.idStringify, MongoID.idParse);
-};
+"use strict"
 
-Meteor._inherits(MongoIDMap, IdMap);
+var IdMap = require('../id-map')
+var MongoID = require('../mongo-id')
+
+class MongoIDMap extends IdMap {
+	constructor() {
+		super(MongoID.idStringify, MongoID.idParse);
+	}
+}
+
 module.exports = MongoIDMap

@@ -1,9 +1,10 @@
 var _ =   require('underscore');
 var Future =   require('fibers/future');
-var EJSON =   require('../ejson/ejson');
+var EJSON =   require('../ejson');
 var LocalCollection = require('../minimongo/LocalCollection')
 var observe = require('../minimongo/observe')
-module.exports = global.ObserveMultiplexer = function (options) {
+
+function ObserveMultiplexer(options) {
   var self = this;
 
   if (!options || !_.has(options, 'ordered'))
@@ -13,7 +14,7 @@ module.exports = global.ObserveMultiplexer = function (options) {
 
   self._ordered = options.ordered;
   self._onStop = options.onStop || function () {};
-  self._queue = new Meteor._SynchronousQueue();
+  self._queue = new global._SynchronousQueue();
   self._handles = {};
   self._readyFuture = new Future;
   self._cache = new observe._CachingChangeObserver({
@@ -29,6 +30,8 @@ module.exports = global.ObserveMultiplexer = function (options) {
     };
   });
 };
+
+module.exports = ObserveMultiplexer
 
 _.extend(ObserveMultiplexer.prototype, {
   addHandleAndSendInitialAdds: function (handle) {

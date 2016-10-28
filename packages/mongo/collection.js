@@ -1,11 +1,15 @@
 var _ = require('underscore')
-var MongoID = require('../mongo-id/id.js')
-var Random = require('../random/random.js')
-var AllowDeny = require('../../client/allow-deny')
+var MongoID = require('../mongo-id')
+var Random = require('../random')
+var AllowDeny = require('../allow-deny')
 var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var randomStream = require('../ddp-client/random_stream')
 var wrapTransform = require('../minimongo/wrap_transform')
 var objectid = require('../minimongo/objectid')
+var LocalCollectionDriver = require('./local_collection_driver')
+var _rewriteSelector = require('./_rewriteSelector')
+var check = require('../check/match').check
+var Match = require('../check/match').Match
 var autopublish = true
 // options.connection, if given, is a LivedataClient or LivedataServer
 // XXX presently there is no way to destroy/clean up a Collection
@@ -14,7 +18,7 @@ var autopublish = true
  * @summary Namespace for MongoDB-related items
  * @namespace
  */
-var Mongo = {};
+// var Mongo = {};
 
 /**
  * @summary varructor for a Collection
@@ -39,7 +43,7 @@ var Collection = function (name, options) {
     throw new Error('use "new" to varruct a Collection');
 
   if (!name && (name !== null)) {
-    Meteor._debug("Warning: creating anonymous collection. It will not be " +
+    console.error("Warning: creating anonymous collection. It will not be " +
                   "saved or synchronized over the network. (Pass null for " +
                   "the collection name to turn off this warning.)");
     name = null;
@@ -111,9 +115,9 @@ var Collection = function (name, options) {
     // collection from Node code without webapp", but we don't yet.
     // #MeteorServerNull
     if (name && self._connection === global.server &&
-        typeof MongoInternals !== "undefined" &&
-        MongoInternals.defaultRemoteCollectionDriver) {
-      options._driver = MongoInternals.defaultRemoteCollectionDriver();
+        typeof MongoConnection !== "undefined" &&
+        MongoConnection.defaultRemoteCollectionDriver) {
+      options._driver = MongoConnection.defaultRemoteCollectionDriver();
     } else {
       options._driver = LocalCollectionDriver;
     }
@@ -347,71 +351,9 @@ _.extend(Collection.prototype, {
 
 });
 
-Collection._publishCursor = function (cursor, sub, collection) {
-  var observeHandle = cursor.observeChanges({
-    added: function (id, fields) {
-      sub.added(collection, id, fields);
-    },
-    changed: function (id, fields) {
-      sub.changed(collection, id, fields);
-    },
-    removed: function (id) {
-      sub.removed(collection, id);
-    }
-  });
 
-  // We don't call sub.ready() here: it gets called in livedata_server, after
-  // possibly calling _publishCursor on multiple returned cursors.
 
-  // register stop callback (expects lambda w/ no args).
-  sub.onStop(function () {observeHandle.stop();});
 
-  // return the observeHandle in case it needs to be stopped early
-  return observeHandle;
-};
-
-// protect against dangerous selectors.  falsey and {_id: falsey} are both
-// likely programmer error, and not what you want, particularly for destructive
-// operations.  JS regexps don't serialize over DDP but can be trivially
-// replaced by $regex.
-Collection._rewriteSelector = function (selector) {
-  // shorthand -- scalars match _id
-  if (objectid._selectorIsId(selector))
-    selector = {_id: selector};
-
-  if (_.isArray(selector)) {
-    // This is consistent with the Mongo console itself; if we don't do this
-    // check passing an empty array ends up selecting all items
-    throw new Error("Mongo selector can't be an array.");
-  }
-
-  if (!selector || (('_id' in selector) && !selector._id))
-    // can't match anything
-    return {_id: Random.id()};
-
-  var ret = {};
-  _.each(selector, function (value, key) {
-    // Mongo supports both {field: /foo/} and {field: {$regex: /foo/}}
-    if (value instanceof RegExp) {
-      ret[key] = convertRegexpToMongoSelector(value);
-    } else if (value && value.$regex instanceof RegExp) {
-      ret[key] = convertRegexpToMongoSelector(value.$regex);
-      // if value is {$regex: /foo/, $options: ...} then $options
-      // override the ones set on $regex.
-      if (value.$options !== undefined)
-        ret[key].$options = value.$options;
-    }
-    else if (_.contains(['$or','$and','$nor'], key)) {
-      // Translate lower levels of $and/$or/$nor
-      ret[key] = _.map(value, function (v) {
-        return Collection._rewriteSelector(v);
-      });
-    } else {
-      ret[key] = value;
-    }
-  });
-  return ret;
-};
 
 // convert a JS RegExp object to a Mongo {$regex: ..., $options: ...}
 // selector
@@ -454,7 +396,7 @@ function convertRegexpToMongoSelector(regexp) {
 //
 // There's one more tweak. On the client, if you don't provide a
 // callback, then if there is an error, a message will be logged with
-// Meteor._debug.
+// console.error.
 //
 // The intent (though this is actually determined by the underlying
 // drivers) is that the operations should be done synchronously, not
@@ -560,7 +502,7 @@ Collection.prototype.update = function update(selector, modifier) {
   var optionsAndCallback = [arguments[2],arguments[3]]
   var callback = popCallbackFromArgs(optionsAndCallback);
 
-  selector = Collection._rewriteSelector(selector);
+  selector = _rewriteSelector(selector);
 
   // We've already popped off the callback, so we are left with an array
   // of one or zero items
@@ -569,7 +511,7 @@ Collection.prototype.update = function update(selector, modifier) {
     // set `insertedId` if absent.  `insertedId` is a Meteor extension.
     if (options.insertedId) {
       if (!(typeof options.insertedId === 'string'
-            || options.insertedId instanceof Mongo.ObjectID))
+            || options.insertedId instanceof MongoID.ObjectID))
         throw new Error("insertedId must be string or ObjectID");
     } else if (! selector._id) {
       options.insertedId = this._makeNewID();
@@ -614,7 +556,7 @@ Collection.prototype.update = function update(selector, modifier) {
  * @param {Function} [callback] Optional.  If present, called with an error object as its argument.
  */
 Collection.prototype.remove = function remove(selector, callback) {
-  selector = Collection._rewriteSelector(selector);
+  selector = _rewriteSelector(selector);
 
   var wrappedCallback = wrapCallback(callback);
 
@@ -741,32 +683,32 @@ Collection.prototype.rawDatabase = function () {
  * @class
  * @param {String} [hexString] Optional.  The 24-character hexadecimal contents of the ObjectID to create
  */
-Mongo.ObjectID = MongoID.ObjectID;
+// Mongo.ObjectID = MongoID.ObjectID;
 
 /**
  * @summary To create a cursor, use find. To access the documents in a cursor, use forEach, map, or fetch.
  * @class
  * @instanceName cursor
  */
-Mongo.Cursor = require('../minimongo/Cursor');
+// Mongo.Cursor = require('../minimongo/Cursor');
 
 /**
  * @deprecated in 0.9.1
  */
-Collection.Cursor = Mongo.Cursor;
+// Collection.Cursor = Mongo.Cursor;
 
 /**
  * @deprecated in 0.9.1
  */
-Collection.ObjectID = Mongo.ObjectID;
+// Collection.ObjectID = Mongo.ObjectID;
 
 /**
  * @deprecated in 0.9.1
  */
-Meteor.Collection = Collection;
+// Meteor.Collection = Collection;
 
 // Allow deny stuff is now in the allow-deny package
-_.extend(Meteor.Collection.prototype, AllowDeny.CollectionPrototype);
+_.extend(Collection.prototype, AllowDeny.CollectionPrototype);
 
 function popCallbackFromArgs(args) {
   // Pull off any callback (or perhaps a 'callback' variable that was passed

@@ -6,54 +6,45 @@
  * NOTE: the public API methods must be run within a fiber. If you call
  * these outside of a fiber they will explode!
  */
-var _ =   require('underscore');
+var _ = require('underscore');
 
-var path =   require('path');
+var path = require('path');
 var MongoDB = require('mongodb');
-var Fiber =   require('fibers');
-var Future =   require('fibers/future');
-var ObserveMultiplexer = require('./observe_multiplex.js')
-var PollingObserveDriver = require('./polling_observe_driver.js')
-var EJSON = require('../ejson/ejson.js')
-var Collection = require('./collection.js')
-var MongoID = require('../mongo-id/id.js')
-var Hook = require('../callback-hook/hook');
+var Fiber = require('fibers');
+var Future = require('fibers/future');
+
+var EJSON = require('../ejson')
+var MongoID = require('../mongo-id')
+
 var LocalCollection = require('../minimongo/LocalCollection')
 var observe = require('../minimongo/observe')
 var objectid = require('../minimongo/objectid')
 var Selector = require('../minimongo/selector')
 var _modify = require('../minimongo/modify')
 var _IdMap = require('../minimongo/id_map')
+var Matcher = require('../minimongo/Matcher')
+
 var wrapTransform = require('../minimongo/wrap_transform')
-require('../minimongo/helpers')
 
+var ObserveMultiplexer = require('./observe_multiplex')
+  var PollingObserveDriver = require('./polling_observe_driver')
+var OplogObserveDriver = require('./OplogObserveDriver')
+var Collection = require('./collection')
+var OplogHandle = require('./OplogHandle')
+var DocFetcher = require('./DocFetcher')
+var Hook = require('../hook')
+var Cursor = require('./Cursor')
+var CursorDescription = require('./CursorDescription')
 
-var MongoInternals = {};
-module.exports = MongoInternals
-// global.MongoTest = {};
-
-// MongoInternals.NpmModules = {
-//   mongodb: {
-//     version: NpmModuleMongodbVersion,
-//     module: MongoDB
-//   }
-// };
-
-// Older version of what is now available via
-// MongoInternals.NpmModules.mongodb.module.  It was never documented, but
-// people do use it.
-// XXX COMPAT WITH 1.0.3.2
-// MongoInternals.NpmModule = MongoDB;
-
-// This is used to add or remove EJSON from the beginning of everything nested
-// inside an EJSON custom type. It should only be called on pure JSON!
-var replaceNames = function (filter, thing) {
+  // This is used to add or remove EJSON from the beginning of everything nested
+  // inside an EJSON custom type. It should only be called on pure JSON!
+var replaceNames = function(filter, thing) {
   if (typeof thing === "object") {
     if (_.isArray(thing)) {
       return _.map(thing, _.bind(replaceNames, null, filter));
     }
     var ret = {};
-    _.each(thing, function (value, key) {
+    _.each(thing, function(value, key) {
       ret[filter(key)] = replaceNames(filter, value);
     });
     return ret;
@@ -64,15 +55,19 @@ var replaceNames = function (filter, thing) {
 // Ensure that EJSON.clone keeps a Timestamp as a Timestamp (instead of just
 // doing a structural clone).
 // XXX how ok is this? what if there are multiple copies of MongoDB loaded?
-MongoDB.Timestamp.prototype.clone = function () {
+MongoDB.Timestamp.prototype.clone = function() {
   // Timestamps should be immutable.
   return this;
 };
 
-var makeMongoLegal = function (name) { return "EJSON" + name; };
-var unmakeMongoLegal = function (name) { return name.substr(5); };
+var makeMongoLegal = function(name) {
+  return "EJSON" + name;
+};
+var unmakeMongoLegal = function(name) {
+  return name.substr(5);
+};
 
-var replaceMongoAtomWithMeteor = function (document) {
+var replaceMongoAtomWithMeteor = function(document) {
   if (document instanceof MongoDB.Binary) {
     var buffer = document.value(true);
     return new Uint8Array(buffer);
@@ -80,8 +75,7 @@ var replaceMongoAtomWithMeteor = function (document) {
   if (document instanceof MongoDB.ObjectID) {
     return new MongoID.ObjectID(document.toHexString());
   }
-  if (document["EJSON$type"] && document["EJSON$value"]
-      && _.size(document) === 2) {
+  if (document["EJSON$type"] && document["EJSON$value"] && _.size(document) === 2) {
     return EJSON.fromJSONValue(replaceNames(unmakeMongoLegal, document));
   }
   if (document instanceof MongoDB.Timestamp) {
@@ -94,14 +88,14 @@ var replaceMongoAtomWithMeteor = function (document) {
   return undefined;
 };
 
-var replaceMeteorAtomWithMongo = function (document) {
+var replaceMeteorAtomWithMongo = function(document) {
   if (EJSON.isBinary(document)) {
     // This does more copies than we'd like, but is necessary because
     // MongoDB.BSON only looks like it takes a Uint8Array (and doesn't actually
     // serialize it correctly).
     return new MongoDB.Binary(new Buffer(document));
   }
-  if (document instanceof MongoID.ObjectID ) {
+  if (document instanceof MongoID.ObjectID) {
     return new MongoDB.ObjectID(document.toHexString());
   }
   if (document instanceof MongoDB.Timestamp) {
@@ -119,7 +113,7 @@ var replaceMeteorAtomWithMongo = function (document) {
   return undefined;
 };
 
-var replaceTypes = function (document, atomTransformer) {
+var replaceTypes = function(document, atomTransformer) {
   if (typeof document !== 'object' || document === null)
     return document;
 
@@ -128,7 +122,7 @@ var replaceTypes = function (document, atomTransformer) {
     return replacedTopLevelAtom;
 
   var ret = document;
-  _.each(document, function (val, key) {
+  _.each(document, function(val, key) {
     var valReplaced = replaceTypes(val, atomTransformer);
     if (val !== valReplaced) {
       // Lazy clone. Shallow copy.
@@ -141,13 +135,19 @@ var replaceTypes = function (document, atomTransformer) {
 };
 
 
-global.MongoConnection = function (url, options) {
+function MongoConnection(url, options) {
   var self = this;
   options = options || {};
   self._observeMultiplexers = {};
   self._onFailoverHook = new Hook;
 
-  var mongoOptions = {db: {safe: true}, server: {}, replSet: {}};
+  var mongoOptions = {
+    db: {
+      safe: true
+    },
+    server: {},
+    replSet: {}
+  };
 
   // Set autoReconnect to true, unless passed on the URL. Why someone
   // would want to set autoReconnect to false, I'm not really sure, but
@@ -190,9 +190,11 @@ global.MongoConnection = function (url, options) {
   MongoDB.connect(
     url,
     mongoOptions,
-    Meteor.bindEnvironment(
-      function (err, db) {
+    global.bindEnvironment(
+      function(err, db) {
+
         if (err) {
+          console.log('err', err)
           throw err;
         }
 
@@ -200,7 +202,7 @@ global.MongoConnection = function (url, options) {
         // if (db.serverConfig._state.master)
         //   self._primary = db.serverConfig._state.master.name;
         // db.serverConfig.on(
-        //   'joined', Meteor.bindEnvironment(function (kind, doc) {
+        //   'joined', global.bindEnvironment(function (kind, doc) {
         //     if (kind === 'primary') {
         //       if (doc.primary !== self._primary) {
         //         self._primary = doc.primary;
@@ -222,23 +224,22 @@ global.MongoConnection = function (url, options) {
         // Allow the constructor to return.
         connectFuture['return'](db);
       },
-      connectFuture.resolver()  // onException
+      connectFuture.resolver() // onException
     )
   );
 
   // Wait for the connection to be successful; throws on failure.
   self.db = connectFuture.wait();
-
-  if (options.oplogUrl && ! Package['disable-oplog']) {
+  if (options.oplogUrl) {
     self._oplogHandle = new OplogHandle(options.oplogUrl, self.db.databaseName);
     self._docFetcher = new DocFetcher(self);
   }
 };
-
+module.exports = MongoConnection
 MongoConnection.prototype.close = function() {
   var self = this;
 
-  if (! self.db)
+  if (!self.db)
     throw Error("close called before Connection created?");
 
   // XXX probably untested
@@ -254,10 +255,10 @@ MongoConnection.prototype.close = function() {
 };
 
 // Returns the Mongo Collection object; may yield.
-MongoConnection.prototype.rawCollection = function (collectionName) {
+MongoConnection.prototype.rawCollection = function(collectionName) {
   var self = this;
 
-  if (! self.db)
+  if (!self.db)
     throw Error("rawCollection called before Connection created?");
 
   var future = new Future;
@@ -265,17 +266,20 @@ MongoConnection.prototype.rawCollection = function (collectionName) {
   return future.wait();
 };
 
-MongoConnection.prototype._createCappedCollection = function (
-    collectionName, byteSize, maxDocuments) {
+MongoConnection.prototype._createCappedCollection = function(
+  collectionName, byteSize, maxDocuments) {
   var self = this;
 
-  if (! self.db)
+  if (!self.db)
     throw Error("_createCappedCollection called before Connection created?");
 
   var future = new Future();
   self.db.createCollection(
-    collectionName,
-    { capped: true, size: byteSize, max: maxDocuments },
+    collectionName, {
+      capped: true,
+      size: byteSize,
+      max: maxDocuments
+    },
     future.resolver());
   future.wait();
 };
@@ -285,13 +289,15 @@ MongoConnection.prototype._createCappedCollection = function (
 // the write, and after observers have been notified (or at least,
 // after the observer notifiers have added themselves to the write
 // fence), you should call 'committed()' on the object returned.
-MongoConnection.prototype._maybeBeginWrite = function () {
+MongoConnection.prototype._maybeBeginWrite = function() {
   var self = this;
   var fence = global.CurrentWriteFence.get();
   if (fence)
     return fence.beginWrite();
   else
-    return {committed: function () {}};
+    return {
+      committed: function() {}
+    };
 };
 
 // Internal interface: adds a callback which is called when the Mongo primary
@@ -319,9 +325,9 @@ MongoConnection.prototype._onFailover = function (callback) {
 // well-defined -- a write "has been made" if it's returned, and an
 // observer "has been notified" if its callback has returned.
 
-var writeCallback = function (write, refresh, callback) {
-  return function (err, result) {
-    if (! err) {
+var writeCallback = function(write, refresh, callback) {
+  return function(err, result) {
+    if (!err) {
       // XXX We don't have to run this on error, right?
       try {
         refresh();
@@ -342,15 +348,15 @@ var writeCallback = function (write, refresh, callback) {
   };
 };
 
-var bindEnvironmentForWrite = function (callback) {
-  return Meteor.bindEnvironment(callback, "Mongo write");
+var bindEnvironmentForWrite = function(callback) {
+  return global.bindEnvironment(callback, "Mongo write");
 };
 
-MongoConnection.prototype._insert = function (collection_name, document,
-                                              callback) {
+MongoConnection.prototype._insert = function(collection_name, document,
+  callback) {
   var self = this;
 
-  var sendError = function (e) {
+  var sendError = function(e) {
     if (callback)
       return callback(e);
     throw e;
@@ -364,21 +370,25 @@ MongoConnection.prototype._insert = function (collection_name, document,
   }
 
   if (!(isPlainObject(document) &&
-        !EJSON._isCustomType(document))) {
+      !EJSON._isCustomType(document))) {
     sendError(new Error(
       "Only plain objects may be inserted into MongoDB"));
     return;
   }
 
   var write = self._maybeBeginWrite();
-  var refresh = function () {
-    Meteor.refresh({collection: collection_name, id: document._id });
+  var refresh = function() {
+    Meteor.refresh({
+      collection: collection_name,
+      id: document._id
+    });
   };
   callback = bindEnvironmentForWrite(writeCallback(write, refresh, callback));
   try {
     var collection = self.rawCollection(collection_name);
-    collection.insert(replaceTypes(document, replaceMeteorAtomWithMongo),
-                      {safe: true}, callback);
+    collection.insert(replaceTypes(document, replaceMeteorAtomWithMongo), {
+      safe: true
+    }, callback);
   } catch (e) {
     write.committed();
     throw e;
@@ -387,51 +397,58 @@ MongoConnection.prototype._insert = function (collection_name, document,
 
 // Cause queries that may be affected by the selector to poll in this write
 // fence.
-MongoConnection.prototype._refresh = function (collectionName, selector) {
+MongoConnection.prototype._refresh = function(collectionName, selector) {
   var self = this;
-  var refreshKey = {collection: collectionName};
+  var refreshKey = {
+    collection: collectionName
+  };
   // If we know which documents we're removing, don't poll queries that are
   // specific to other documents. (Note that multiple notifications here should
   // not cause multiple polls, since all our listener is doing is enqueueing a
   // poll.)
   var specificIds = objectid._idsMatchedBySelector(selector);
   if (specificIds) {
-    _.each(specificIds, function (id) {
-      Meteor.refresh(_.extend({id: id}, refreshKey));
+    _.each(specificIds, function(id) {
+      Meteor.refresh(_.extend({
+        id: id
+      }, refreshKey));
     });
   } else {
     Meteor.refresh(refreshKey);
   }
 };
 
-MongoConnection.prototype._remove = function (collection_name, selector,
-                                              callback) {
+MongoConnection.prototype._remove = function(collection_name, selector,
+  callback) {
   var self = this;
-  console.log(selector)
 
   var write = self._maybeBeginWrite();
-  var refresh = function () {
+  var refresh = function() {
     self._refresh(collection_name, selector);
   };
   callback = bindEnvironmentForWrite(writeCallback(write, refresh, callback));
 
   try {
     var collection = self.rawCollection(collection_name);
-    collection.remove(replaceTypes(selector, replaceMeteorAtomWithMongo),
-                      {safe: true}, callback);
+    collection.remove(replaceTypes(selector, replaceMeteorAtomWithMongo), {
+      safe: true
+    }, callback);
   } catch (e) {
     write.committed();
     throw e;
   }
 };
 
-MongoConnection.prototype._dropCollection = function (collectionName, cb) {
+MongoConnection.prototype._dropCollection = function(collectionName, cb) {
   var self = this;
 
   var write = self._maybeBeginWrite();
-  var refresh = function () {
-    Meteor.refresh({collection: collectionName, id: null,
-                    dropCollection: true});
+  var refresh = function() {
+    Meteor.refresh({
+      collection: collectionName,
+      id: null,
+      dropCollection: true
+    });
   };
   cb = bindEnvironmentForWrite(writeCallback(write, refresh, cb));
 
@@ -446,12 +463,14 @@ MongoConnection.prototype._dropCollection = function (collectionName, cb) {
 
 // For testing only.  Slightly better than `c.rawDatabase().dropDatabase()`
 // because it lets the test's fence wait for it to be complete.
-MongoConnection.prototype._dropDatabase = function (cb) {
+MongoConnection.prototype._dropDatabase = function(cb) {
   var self = this;
 
   var write = self._maybeBeginWrite();
-  var refresh = function () {
-    Meteor.refresh({ dropDatabase: true });
+  var refresh = function() {
+    Meteor.refresh({
+      dropDatabase: true
+    });
   };
   cb = bindEnvironmentForWrite(writeCallback(write, refresh, cb));
 
@@ -463,11 +482,11 @@ MongoConnection.prototype._dropDatabase = function (cb) {
   }
 };
 
-MongoConnection.prototype._update = function (collection_name, selector, mod,
-                                              options, callback) {
+MongoConnection.prototype._update = function(collection_name, selector, mod,
+  options, callback) {
   var self = this;
 
-  if (! callback && options instanceof Function) {
+  if (!callback && options instanceof Function) {
     callback = options;
     options = null;
   }
@@ -490,23 +509,25 @@ MongoConnection.prototype._update = function (collection_name, selector, mod,
     throw new Error("Invalid modifier. Modifier must be an object.");
 
   if (!(isPlainObject(mod) &&
-        !EJSON._isCustomType(mod))) {
+      !EJSON._isCustomType(mod))) {
     throw new Error(
       "Only plain objects may be used as replacement" +
-        " documents in MongoDB");
+      " documents in MongoDB");
     return;
   }
 
   if (!options) options = {};
 
   var write = self._maybeBeginWrite();
-  var refresh = function () {
+  var refresh = function() {
     self._refresh(collection_name, selector);
   };
   callback = writeCallback(write, refresh, callback);
   try {
     var collection = self.rawCollection(collection_name);
-    var mongoOpts = {safe: true};
+    var mongoOpts = {
+      safe: true
+    };
     // explictly enumerate options that minimongo supports
     if (options.upsert) mongoOpts.upsert = true;
     if (options.multi) mongoOpts.multi = true;
@@ -521,7 +542,7 @@ MongoConnection.prototype._update = function (collection_name, selector, mod,
     var isModify = isModificationMod(mongoMod);
     var knownId = selector._id || mod._id;
 
-    if (options._forbidReplace && ! isModify) {
+    if (options._forbidReplace && !isModify) {
       var e = new Error("Invalid modifier. Replacements are forbidden.");
       if (callback) {
         return callback(e);
@@ -560,22 +581,24 @@ MongoConnection.prototype._update = function (collection_name, selector, mod,
     //     }
     //   );
     // } else {
-      collection.update(
-        mongoSelector, mongoMod, mongoOpts,
-        bindEnvironmentForWrite(function (err, result, extra) {
-          if (! err) {
-            if (result && options._returnObject) {
-              result = { numberAffected: result };
-              // If this was an upsert() call, and we ended up
-              // inserting a new doc and we know its id, then
-              // return that id as well.
-              if (options.upsert && knownId &&
-                  ! extra.updatedExisting)
-                result.insertedId = knownId;
-            }
+    collection.update(
+      mongoSelector, mongoMod, mongoOpts,
+      bindEnvironmentForWrite(function(err, result, extra) {
+        if (!err) {
+          if (result && options._returnObject) {
+            result = {
+              numberAffected: result
+            };
+            // If this was an upsert() call, and we ended up
+            // inserting a new doc and we know its id, then
+            // return that id as well.
+            if (options.upsert && knownId &&
+              !extra.updatedExisting)
+              result.insertedId = knownId;
           }
-          callback(err, result);
-        }));
+        }
+        callback(err, result);
+      }));
     // }
   } catch (e) {
     write.committed();
@@ -583,7 +606,7 @@ MongoConnection.prototype._update = function (collection_name, selector, mod,
   }
 };
 
-var isModificationMod = function (mod) {
+var isModificationMod = function(mod) {
   var isReplace = false;
   var isModify = false;
   for (var k in mod) {
@@ -603,7 +626,7 @@ var isModificationMod = function (mod) {
 var NUM_OPTIMISTIC_TRIES = 3;
 
 // exposed for testing
-MongoConnection._isCannotChangeIdError = function (err) {
+MongoConnection._isCannotChangeIdError = function(err) {
   // First check for what this error looked like in Mongo 2.4.  Either of these
   // checks should work, but just to be safe...
   if (err.code === 13596)
@@ -620,8 +643,8 @@ MongoConnection._isCannotChangeIdError = function (err) {
   return false;
 };
 
-var simulateUpsertWithInsertedId = function (collection, selector, mod,
-                                             isModify, options, callback) {
+var simulateUpsertWithInsertedId = function(collection, selector, mod,
+  isModify, options, callback) {
   // STRATEGY:  First try doing a plain update.  If it affected 0 documents,
   // then without affecting the database, we know we should probably do an
   // insert.  We then do a *conditional* insert that will fail in the case
@@ -649,7 +672,7 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
     newDoc = selectorDoc;
 
     // Convert dotted keys into objects. (Resolves issue #4522).
-    _.each(newDoc, function (value, key) {
+    _.each(newDoc, function(value, key) {
       var trail = key.split(".");
 
       if (trail.length > 1) {
@@ -657,7 +680,7 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
         delete newDoc[key];
 
         var obj = newDoc,
-            leaf = trail.pop();
+          leaf = trail.pop();
 
         // XXX It is not quite certain what should be done if there are clashing
         // keys on the trail of the dotted key. For now we will just override it
@@ -676,7 +699,9 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
       }
     });
 
-    _modify(newDoc, mod, {isInsert: true});
+    _modify(newDoc, mod, {
+      isInsert: true
+    });
   } else {
     newDoc = mod;
   }
@@ -693,54 +718,56 @@ var simulateUpsertWithInsertedId = function (collection, selector, mod,
 
   var tries = NUM_OPTIMISTIC_TRIES;
 
-  var doUpdate = function () {
+  var doUpdate = function() {
     tries--;
-    if (! tries) {
+    if (!tries) {
       callback(new Error("Upsert failed after " + NUM_OPTIMISTIC_TRIES + " tries."));
     } else {
       collection.update(selector, mod, mongoOptsForUpdate,
-                        bindEnvironmentForWrite(function (err, result) {
-                          if (err)
-                            callback(err);
-                          else if (result)
-                            callback(null, {
-                              numberAffected: result
-                            });
-                          else
-                            doConditionalInsert();
-                        }));
+        bindEnvironmentForWrite(function(err, result) {
+          if (err)
+            callback(err);
+          else if (result)
+            callback(null, {
+              numberAffected: result
+            });
+          else
+            doConditionalInsert();
+        }));
     }
   };
 
-  var doConditionalInsert = function () {
+  var doConditionalInsert = function() {
     var replacementWithId = _.extend(
-      replaceTypes({_id: insertedId}, replaceMeteorAtomWithMongo),
+      replaceTypes({
+        _id: insertedId
+      }, replaceMeteorAtomWithMongo),
       newDoc);
     collection.update(selector, replacementWithId, mongoOptsForInsert,
-                      bindEnvironmentForWrite(function (err, result) {
-                        if (err) {
-                          // figure out if this is a
-                          // "cannot change _id of document" error, and
-                          // if so, try doUpdate() again, up to 3 times.
-                          if (MongoConnection._isCannotChangeIdError(err)) {
-                            doUpdate();
-                          } else {
-                            callback(err);
-                          }
-                        } else {
-                          callback(null, {
-                            numberAffected: result,
-                            insertedId: insertedId
-                          });
-                        }
-                      }));
+      bindEnvironmentForWrite(function(err, result) {
+        if (err) {
+          // figure out if this is a
+          // "cannot change _id of document" error, and
+          // if so, try doUpdate() again, up to 3 times.
+          if (MongoConnection._isCannotChangeIdError(err)) {
+            doUpdate();
+          } else {
+            callback(err);
+          }
+        } else {
+          callback(null, {
+            numberAffected: result,
+            insertedId: insertedId
+          });
+        }
+      }));
   };
 
   doUpdate();
 };
 
-_.each(["insert", "update", "remove", "dropCollection", "dropDatabase"], function (method) {
-  MongoConnection.prototype[method] = function (/* arguments */) {
+_.each(["insert", "update", "remove", "dropCollection", "dropDatabase"], function(method) {
+  MongoConnection.prototype[method] = function( /* arguments */ ) {
     var self = this;
     return Meteor.wrapAsync(self["_" + method]).apply(self, arguments);
   };
@@ -749,22 +776,22 @@ _.each(["insert", "update", "remove", "dropCollection", "dropDatabase"], functio
 // XXX MongoConnection.upsert() does not return the id of the inserted document
 // unless you set it explicitly in the selector or modifier (as a replacement
 // doc).
-MongoConnection.prototype.upsert = function (collectionName, selector, mod,
-                                             options, callback) {
+MongoConnection.prototype.upsert = function(collectionName, selector, mod,
+  options, callback) {
   var self = this;
-  if (typeof options === "function" && ! callback) {
+  if (typeof options === "function" && !callback) {
     callback = options;
     options = {};
   }
 
   return self.update(collectionName, selector, mod,
-                     _.extend({}, options, {
-                       upsert: true,
-                       _returnObject: true
-                     }), callback);
+    _.extend({}, options, {
+      upsert: true,
+      _returnObject: true
+    }), callback);
 };
 
-MongoConnection.prototype.find = function (collectionName, selector, options) {
+MongoConnection.prototype.find = function(collectionName, selector, options) {
   var self = this;
 
   if (arguments.length === 1)
@@ -774,8 +801,8 @@ MongoConnection.prototype.find = function (collectionName, selector, options) {
     self, new CursorDescription(collectionName, selector, options));
 };
 
-MongoConnection.prototype.findOne = function (collection_name, selector,
-                                              options) {
+MongoConnection.prototype.findOne = function(collection_name, selector,
+  options) {
   var self = this;
   if (arguments.length === 1)
     selector = {};
@@ -787,8 +814,8 @@ MongoConnection.prototype.findOne = function (collection_name, selector,
 
 // We'll actually design an index API later. For now, we just pass through to
 // Mongo's, but make it synchronous.
-MongoConnection.prototype._ensureIndex = function (collectionName, index,
-                                                   options) {
+MongoConnection.prototype._ensureIndex = function(collectionName, index,
+  options) {
   var self = this;
 
   // We expect this function to be called at startup, not from within a method,
@@ -798,7 +825,7 @@ MongoConnection.prototype._ensureIndex = function (collectionName, index,
   var indexName = collection.ensureIndex(index, options, future.resolver());
   future.wait();
 };
-MongoConnection.prototype._dropIndex = function (collectionName, index) {
+MongoConnection.prototype._dropIndex = function(collectionName, index) {
   var self = this;
 
   // This function is only used by test code, not within a method, so we don't
@@ -809,120 +836,8 @@ MongoConnection.prototype._dropIndex = function (collectionName, index) {
   future.wait();
 };
 
-// CURSORS
-
-// There are several classes which relate to cursors:
-//
-// CursorDescription represents the arguments used to construct a cursor:
-// collectionName, selector, and (find) options.  Because it is used as a key
-// for cursor de-dup, everything in it should either be JSON-stringifiable or
-// not affect observeChanges output (eg, options.transform functions are not
-// stringifiable but do not affect observeChanges).
-//
-// SynchronousCursor is a wrapper around a MongoDB cursor
-// which includes fully-synchronous versions of forEach, etc.
-//
-// Cursor is the cursor object returned from find(), which implements the
-// documented Collection cursor API.  It wraps a CursorDescription and a
-// SynchronousCursor (lazily: it doesn't contact Mongo until you call a method
-// like fetch or forEach on it).
-//
-// ObserveHandle is the "observe handle" returned from observeChanges. It has a
-// reference to an ObserveMultiplexer.
-//
-// ObserveMultiplexer allows multiple identical ObserveHandles to be driven by a
-// single observe driver.
-//
-// There are two "observe drivers" which drive ObserveMultiplexers:
-//   - PollingObserveDriver caches the results of a query and reruns it when
-//     necessary.
-//   - OplogObserveDriver follows the Mongo operation log to directly observe
-//     database changes.
-// Both implementations follow the same simple interface: when you create them,
-// they start sending observeChanges callbacks (and a ready() invocation) to
-// their ObserveMultiplexer, and you stop them by calling their stop() method.
-
-global.CursorDescription = function (collectionName, selector, options) {
-  var self = this;
-  self.collectionName = collectionName;
-  self.selector = Collection._rewriteSelector(selector);
-  self.options = options || {};
-};
-
-global.Cursor = function (mongo, cursorDescription) {
-  var self = this;
-
-  self._mongo = mongo;
-  self._cursorDescription = cursorDescription;
-  self._synchronousCursor = null;
-};
-
-_.each(['forEach', 'map', 'fetch', 'count'], function (method) {
-  Cursor.prototype[method] = function () {
-    var self = this;
-
-    // You can only observe a tailable cursor.
-    if (self._cursorDescription.options.tailable)
-      throw new Error("Cannot call " + method + " on a tailable cursor");
-
-    if (!self._synchronousCursor) {
-      self._synchronousCursor = self._mongo._createSynchronousCursor(
-        self._cursorDescription, {
-          // Make sure that the "self" argument to forEach/map callbacks is the
-          // Cursor, not the SynchronousCursor.
-          selfForIteration: self,
-          useTransform: true
-        });
-    }
-
-    return self._synchronousCursor[method].apply(
-      self._synchronousCursor, arguments);
-  };
-});
-
-// Since we don't actually have a "nextObject" interface, there's really no
-// reason to have a "rewind" interface.  All it did was make multiple calls
-// to fetch/map/forEach return nothing the second time.
-// XXX COMPAT WITH 0.8.1
-Cursor.prototype.rewind = function () {
-};
-
-Cursor.prototype.getTransform = function () {
-  return this._cursorDescription.options.transform;
-};
-
-// When you call Meteor.publish() with a function that returns a Cursor, we need
-// to transmute it into the equivalent subscription.  This is the function that
-// does that.
-
-Cursor.prototype._publishCursor = function (sub) {
-  var self = this;
-  var collection = self._cursorDescription.collectionName;
-  return Collection._publishCursor(self, sub, collection);
-};
-
-// Used to guarantee that publish functions return at most one cursor per
-// collection. Private, because we might later have cursors that include
-// documents from multiple collections somehow.
-Cursor.prototype._getCollectionName = function () {
-  var self = this;
-  return self._cursorDescription.collectionName;
-}
-
-Cursor.prototype.observe = function (callbacks) {
-  var self = this;
-  return observe._observeFromObserveChanges(self, callbacks);
-};
-
-Cursor.prototype.observeChanges = function (callbacks) {
-  var self = this;
-  var ordered = observe._observeChangesCallbacksAreOrdered(callbacks);
-  return self._mongo._observeChanges(
-    self._cursorDescription, ordered, callbacks);
-};
-
 MongoConnection.prototype._createSynchronousCursor = function(
-    cursorDescription, options) {
+  cursorDescription, options) {
   var self = this;
   options = _.pick(options || {}, 'selfForIteration', 'useTransform');
 
@@ -950,7 +865,7 @@ MongoConnection.prototype._createSynchronousCursor = function(
     // very hard-coded Mongo flag which only works on the oplog collection and
     // only works with the ts field.
     if (cursorDescription.collectionName === OPLOG_COLLECTION &&
-        cursorDescription.selector.ts) {
+      cursorDescription.selector.ts) {
       mongoOptions.oplogReplay = true;
     }
   }
@@ -962,7 +877,7 @@ MongoConnection.prototype._createSynchronousCursor = function(
   return new SynchronousCursor(dbCursor, cursorDescription, options);
 };
 
-var SynchronousCursor = function (dbCursor, cursorDescription, options) {
+var SynchronousCursor = function(dbCursor, cursorDescription, options) {
   var self = this;
   options = _.pick(options || {}, 'selfForIteration', 'useTransform');
 
@@ -988,7 +903,7 @@ var SynchronousCursor = function (dbCursor, cursorDescription, options) {
 };
 
 _.extend(SynchronousCursor.prototype, {
-  _nextObject: function () {
+  _nextObject: function() {
     var self = this;
 
     while (true) {
@@ -1015,7 +930,7 @@ _.extend(SynchronousCursor.prototype, {
     }
   },
 
-  forEach: function (callback, thisArg) {
+  forEach: function(callback, thisArg) {
     var self = this;
 
     // Get back to the beginning.
@@ -1033,16 +948,16 @@ _.extend(SynchronousCursor.prototype, {
   },
 
   // XXX Allow overlapping callback executions if callback yields.
-  map: function (callback, thisArg) {
+  map: function(callback, thisArg) {
     var self = this;
     var res = [];
-    self.forEach(function (doc, index) {
+    self.forEach(function(doc, index) {
       res.push(callback.call(thisArg, doc, index, self._selfForIteration));
     });
     return res;
   },
 
-  _rewind: function () {
+  _rewind: function() {
     var self = this;
 
     // known to be synchronous
@@ -1052,30 +967,30 @@ _.extend(SynchronousCursor.prototype, {
   },
 
   // Mostly usable for tailable cursors.
-  close: function () {
+  close: function() {
     var self = this;
 
     self._dbCursor.close();
   },
 
-  fetch: function () {
+  fetch: function() {
     var self = this;
     return self.map(_.identity);
   },
 
-  count: function () {
+  count: function() {
     var self = this;
     return self._synchronousCount().wait();
   },
 
   // This method is NOT wrapped in Cursor.
-  getRawObjects: function (ordered) {
+  getRawObjects: function(ordered) {
     var self = this;
     if (ordered) {
       return self.fetch();
     } else {
       var results = new _IdMap;
-      self.forEach(function (doc) {
+      self.forEach(function(doc) {
         results.set(doc._id, doc);
       });
       return results;
@@ -1083,7 +998,7 @@ _.extend(SynchronousCursor.prototype, {
   }
 });
 
-MongoConnection.prototype.tail = function (cursorDescription, docCallback) {
+MongoConnection.prototype.tail = function(cursorDescription, docCallback) {
   var self = this;
   if (!cursorDescription.options.tailable)
     throw new Error("Can only tail a tailable cursor");
@@ -1092,7 +1007,7 @@ MongoConnection.prototype.tail = function (cursorDescription, docCallback) {
 
   var stopped = false;
   var lastTS = undefined;
-  var loop = function () {
+  var loop = function() {
     while (true) {
       if (stopped)
         return;
@@ -1118,7 +1033,9 @@ MongoConnection.prototype.tail = function (cursorDescription, docCallback) {
       } else {
         var newSelector = _.clone(cursorDescription.selector);
         if (lastTS) {
-          newSelector.ts = {$gt: lastTS};
+          newSelector.ts = {
+            $gt: lastTS
+          };
         }
         cursor = self._createSynchronousCursor(new CursorDescription(
           cursorDescription.collectionName,
@@ -1127,24 +1044,24 @@ MongoConnection.prototype.tail = function (cursorDescription, docCallback) {
         // Mongo failover takes many seconds.  Retry in a bit.  (Without this
         // setTimeout, we peg the CPU at 100% and never notice the actual
         // failover.
-        Meteor.setTimeout(loop, 100);
+        setTimeout(loop, 100);
         break;
       }
     }
   };
 
-  Meteor.defer(loop);
+  loop()
 
   return {
-    stop: function () {
+    stop: function() {
       stopped = true;
       cursor.close();
     }
   };
 };
 
-MongoConnection.prototype._observeChanges = function (
-    cursorDescription, ordered, callbacks) {
+MongoConnection.prototype._observeChanges = function(
+  cursorDescription, ordered, callbacks) {
   var self = this;
 
   if (cursorDescription.options.tailable) {
@@ -1154,13 +1071,15 @@ MongoConnection.prototype._observeChanges = function (
   // You may not filter out _id when observing changes, because the id is a core
   // part of the observeChanges API.
   if (cursorDescription.options.fields &&
-      (cursorDescription.options.fields._id === 0 ||
-       cursorDescription.options.fields._id === false)) {
+    (cursorDescription.options.fields._id === 0 ||
+      cursorDescription.options.fields._id === false)) {
     throw Error("You may not observe a cursor with {fields: {_id: 0}}");
   }
 
   var observeKey = JSON.stringify(
-    _.extend({ordered: ordered}, cursorDescription));
+    _.extend({
+      ordered: ordered
+    }, cursorDescription));
 
   var multiplexer, observeDriver;
   var firstHandle = false;
@@ -1168,7 +1087,7 @@ MongoConnection.prototype._observeChanges = function (
   // Find a matching ObserveMultiplexer, or create a new one. This next block is
   // guaranteed to not yield (and it doesn't call anything that can observe a
   // new query), so no other calls to this function can interleave with it.
-  Meteor._noYieldsAllowed(function () {
+  global._noYieldsAllowed(function() {
     if (_.has(self._observeMultiplexers, observeKey)) {
       multiplexer = self._observeMultiplexers[observeKey];
     } else {
@@ -1176,9 +1095,9 @@ MongoConnection.prototype._observeChanges = function (
       // Create a new ObserveMultiplexer.
       multiplexer = new ObserveMultiplexer({
         ordered: ordered,
-        onStop: function () {
+        onStop: function() {
           delete self._observeMultiplexers[observeKey];
-          observeDriver.stop();
+          multiplexer._observeDriver.stop();
         }
       });
       self._observeMultiplexers[observeKey] = multiplexer;
@@ -1190,54 +1109,73 @@ MongoConnection.prototype._observeChanges = function (
   if (firstHandle) {
     var matcher, sorter;
     var canUseOplog = _.all([
-      function () {
+      function() {
         // At a bare minimum, using the oplog requires us to have an oplog, to
         // want unordered callbacks, and to not want a callback on the polls
         // that won't happen.
         return self._oplogHandle && !ordered &&
           !callbacks._testOnlyPollCallback;
-      }, function () {
+      },
+      function() {
         // We need to be able to compile the selector. Fall back to polling for
         // some newfangled $selector that minimongo doesn't support yet.
         try {
-          matcher = new Minimongo.Matcher(cursorDescription.selector);
+          matcher = new Matcher(cursorDescription.selector);
           return true;
         } catch (e) {
+          console.log(e)
           // XXX make all compilation errors MinimongoError or something
           //     so that this doesn't ignore unrelated exceptions
           return false;
         }
-      }, function () {
+      },
+      function() {
         // ... and the selector itself needs to support oplog.
+        // console.log(OplogObserveDriver.cursorSupported(cursorDescription, matcher))
         return OplogObserveDriver.cursorSupported(cursorDescription, matcher);
-      }, function () {
+      },
+      function() {
         // And we need to be able to compile the sort, if any.  eg, can't be
         // {$natural: 1}.
         if (!cursorDescription.options.sort)
           return true;
         try {
-          sorter = new Minimongo.Sorter(cursorDescription.options.sort,
-                                        { matcher: matcher });
+          sorter = new Minimongo.Sorter(cursorDescription.options.sort, {
+            matcher: matcher
+          });
           return true;
         } catch (e) {
           // XXX make all compilation errors MinimongoError or something
           //     so that this doesn't ignore unrelated exceptions
           return false;
         }
-      }], function (f) { return f(); });  // invoke each function
+      }
+    ], function(f) {
+      return f();
+    }); // invoke each function
+    // if (canUseOplog){
+    //   multiplexer._observeDriver = new OplogObserveDriver({
+    //     cursorDescription: cursorDescription,
+    //     mongoHandle: self,
+    //     multiplexer: multiplexer,
+    //     ordered: ordered,
+    //     matcher: matcher, // ignored by polling
+    //     sorter: sorter, // ignored by polling
+    //     _testOnlyPollCallback: callbacks._testOnlyPollCallback
+    //   });
+    // }
+      var driverClass = canUseOplog ? OplogObserveDriver : PollingObserveDriver;
+      observeDriver = new driverClass({
+        cursorDescription: cursorDescription,
+        mongoHandle: self,
+        multiplexer: multiplexer,
+        ordered: ordered,
+        matcher: matcher, // ignored by polling
+        sorter: sorter, // ignored by polling
+        _testOnlyPollCallback: callbacks._testOnlyPollCallback
+      });
 
-    var driverClass = canUseOplog ? OplogObserveDriver : PollingObserveDriver;
-    observeDriver = new driverClass({
-      cursorDescription: cursorDescription,
-      mongoHandle: self,
-      multiplexer: multiplexer,
-      ordered: ordered,
-      matcher: matcher,  // ignored by polling
-      sorter: sorter,  // ignored by polling
-      _testOnlyPollCallback: callbacks._testOnlyPollCallback
-    });
-
-    // This field is only set for use in tests.
+    // // This field is only set for use in tests.
     multiplexer._observeDriver = observeDriver;
   }
 
@@ -1253,36 +1191,45 @@ MongoConnection.prototype._observeChanges = function (
 // listenCallback is the same kind of (notification, complete) callback passed
 // to InvalidationCrossbar.listen.
 
-global.listenAll = function (cursorDescription, listenCallback) {
+global.listenAll = function(cursorDescription, listenCallback) {
   var listeners = [];
-  forEachTrigger(cursorDescription, function (trigger) {
+  forEachTrigger(cursorDescription, function(trigger) {
     listeners.push(global.InvalidationCrossbar.listen(
       trigger, listenCallback));
   });
 
   return {
-    stop: function () {
-      _.each(listeners, function (listener) {
+    stop: function() {
+      _.each(listeners, function(listener) {
         listener.stop();
       });
     }
   };
 };
 
-global.forEachTrigger = function (cursorDescription, triggerCallback) {
-  var key = {collection: cursorDescription.collectionName};
+global.forEachTrigger = function(cursorDescription, triggerCallback) {
+  var key = {
+    collection: cursorDescription.collectionName
+  };
   var specificIds = objectid._idsMatchedBySelector(
     cursorDescription.selector);
   if (specificIds) {
-    _.each(specificIds, function (id) {
-      triggerCallback(_.extend({id: id}, key));
+    _.each(specificIds, function(id) {
+      triggerCallback(_.extend({
+        id: id
+      }, key));
     });
-    triggerCallback(_.extend({dropCollection: true, id: null}, key));
+    triggerCallback(_.extend({
+      dropCollection: true,
+      id: null
+    }, key));
   } else {
     triggerCallback(key);
   }
   // Everyone cares about the database being dropped.
-  triggerCallback({ dropDatabase: true });
+  triggerCallback({
+    dropDatabase: true
+  });
 };
 
 // observeChanges for tailable cursors on capped collections.
@@ -1294,7 +1241,7 @@ global.forEachTrigger = function (cursorDescription, triggerCallback) {
 //   - If you disconnect and reconnect from Mongo, it will essentially restart
 //     the query, which will lead to duplicate results. This is pretty bad,
 //     but if you include a field called 'ts' which is inserted as
-//     new MongoInternals.MongoTimestamp(0, 0) (which is initialized to the
+//     new exports.MongoTimestamp(0, 0) (which is initialized to the
 //     current Mongo-style timestamp), we'll be able to find the place to
 //     restart properly. (This field is specifically understood by Mongo with an
 //     optimization which allows it to find the right place to start without
@@ -1313,20 +1260,19 @@ global.forEachTrigger = function (cursorDescription, triggerCallback) {
 //     enough to accurately evaluate the query against the write fence, we
 //     should be able to do this...  Of course, minimongo doesn't even support
 //     Mongo Timestamps yet.
-MongoConnection.prototype._observeChangesTailable = function (
-    cursorDescription, ordered, callbacks) {
+MongoConnection.prototype._observeChangesTailable = function(
+  cursorDescription, ordered, callbacks) {
+  console.log('_observeChangesTailable')
   var self = this;
 
   // Tailable cursors only ever call added/addedBefore callbacks, so it's an
   // error if you didn't provide them.
   if ((ordered && !callbacks.addedBefore) ||
-      (!ordered && !callbacks.added)) {
-    throw new Error("Can't observe an " + (ordered ? "ordered" : "unordered")
-                    + " tailable cursor without a "
-                    + (ordered ? "addedBefore" : "added") + " callback");
+    (!ordered && !callbacks.added)) {
+    throw new Error("Can't observe an " + (ordered ? "ordered" : "unordered") + " tailable cursor without a " + (ordered ? "addedBefore" : "added") + " callback");
   }
 
-  return self.tail(cursorDescription, function (doc) {
+  return self.tail(cursorDescription, function(doc) {
     var id = doc._id;
     delete doc._id;
     // The ts is an implementation detail. Hide it.
@@ -1342,6 +1288,6 @@ MongoConnection.prototype._observeChangesTailable = function (
 // XXX We probably need to find a better way to expose this. Right now
 // it's only used by tests, but in fact you need it in normal
 // operation to interact with capped collections.
-MongoInternals.MongoTimestamp = MongoDB.Timestamp;
+exports.MongoTimestamp = MongoDB.Timestamp;
 
-MongoInternals.Connection = MongoConnection;
+exports.Connection = MongoConnection;

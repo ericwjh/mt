@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var Random = require('../random/random.js')
+var Random = require('../random')
 // RandomStream allows for generation of pseudo-random values, from a seed.
 //
 // We use this for consistent 'random' numbers across the client and server.

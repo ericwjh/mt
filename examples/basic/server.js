@@ -1,3 +1,4 @@
+"use strict"
 process.env.PORT = process.env.PORT || 4000
 
 var http = require("http");
@@ -27,7 +28,7 @@ Fibers(function() {
 	// var L = new Collection(null)
 	// L.insert({ts:new Date})
 
-	var A = new Collection('a', {is_auto: true})
+	var A = new Collection('a')
 	// A.insert({
 	// 	ts: new Date
 	// })
@@ -73,3 +74,14 @@ Fibers(function() {
 	r.set(456)
 
 }).run()
+
+
+// function sleep(ms = 0) {
+//   return new Promise(r => setTimeout(r, ms));
+// }
+
+// (async function(){
+//   console.log('a');
+//   await sleep(1000);
+//   console.log('b');
+// })()

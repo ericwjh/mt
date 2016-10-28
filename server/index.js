@@ -1,12 +1,19 @@
-var Fiber = require("fibers")
-require('../packages/meteor/index_server.js')
-require('../packages/promise/server.js')
+// var Fiber = require("fibers")
+global.Future = require('fibers/future')
+
+global._debug = function(){
+	console.log.apply(console, arguments)
+	console.trace()
+}
+require('../packages/utils/index_server')
+
 module.exports = {
 	registerDDP: require('../packages/ddp-server'),
-	connectMongo: function(url) {
+	connectMongo: function(url, MONGO_OPLOG_URL) {
 		process.env.MONGO_URL = url
-		global.MongoInternals = require('mt/packages/mongo/mongo_driver.js')
-		require('../packages/mongo/remote_collection_driver.js')
+		if (MONGO_OPLOG_URL)
+			process.env.MONGO_OPLOG_URL = MONGO_OPLOG_URL
+		global.MongoConnection = require('../packages/mongo/remote_collection_driver')
 	}
 }
 

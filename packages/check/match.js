@@ -4,7 +4,7 @@ var _ = require('underscore')
 // Things we explicitly do NOT support:
 //    - heterogenous arrays
 
-var currentArgumentChecker = new Meteor.EnvironmentVariable;
+var currentArgumentChecker = new global.EnvironmentVariable;
 var isPlainObject = require("./isPlainObject.js").isPlainObject;
 
 /**

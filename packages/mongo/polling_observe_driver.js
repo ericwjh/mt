@@ -3,7 +3,7 @@ var LocalCollection = require('../minimongo/LocalCollection')
 var _IdMap = require('../minimongo/id_map')
 var diff = require('../minimongo/diff')
 
-var PollingObserveDriver = function (options) {
+function PollingObserveDriver(options) {
   var self = this;
 
   self._cursorDescription = options.cursorDescription;
@@ -37,7 +37,7 @@ var PollingObserveDriver = function (options) {
     self._cursorDescription.options.pollingThrottleMs || 50 /* ms */);
 
   // XXX figure out if we still need a queue
-  self._taskQueue = new Meteor._SynchronousQueue();
+  self._taskQueue = new global._SynchronousQueue();
 
   var listenersHandle = listenAll(
     self._cursorDescription, function (notification) {
@@ -84,6 +84,7 @@ var PollingObserveDriver = function (options) {
   //   "mongo-livedata", "observe-drivers-polling", 1);
 };
 module.exports = PollingObserveDriver
+
 _.extend(PollingObserveDriver.prototype, {
   // This is always called through _.throttle (except once at startup).
   _unthrottledEnsurePollIsScheduled: function () {
@@ -176,7 +177,7 @@ _.extend(PollingObserveDriver.prototype, {
       // unfortunately the ObserveDriver API doesn't provide a good way to
       // "cancel" the observe from the inside in this case.
       Array.prototype.push.apply(self._pendingWrites, writesForCycle);
-      Meteor._debug("Exception while polling query " +
+      console.error("Exception while polling query " +
                     JSON.stringify(self._cursorDescription) + ": " + e.stack);
       return;
     }

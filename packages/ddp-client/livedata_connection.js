@@ -1,17 +1,19 @@
+"use strict"
 var _ = require('underscore')
-var Random = require('../random/random.js')
+var Random = require('../random')
 var Tracker = require('../tracker')
 var stringifyDDP = require('../ddp-common/utils').stringifyDDP
 var parseDDP = require('../ddp-common/utils').parseDDP
 var MethodInvocation =  require('../ddp-common/method_invocation')
 var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var DDPCommon =  require('../ddp-common')
-var EJSON = require('../ejson/ejson.js')
-var MongoID = require('../mongo-id/id.js')
+var EJSON = require('../ejson')
+var MongoID = require('../mongo-id')
 var DiffSequence = require('../diff-sequence'); 
-var MongoIDMap = require('./id_map.js')
+var MongoIDMap = require('./id_map')
 var Dependency = require('../tracker/Dependency')
 var computations = require('../tracker/computations')
+var ClientStream = require('./stream_client_common')
 // if (Meteor.isServer) {
 //   var path =   require('path');
 //   var Fiber =   require('fibers');
@@ -43,7 +45,7 @@ var Connection = function (url, options) {
   options = _.extend({
     onConnected: function () {},
     onDDPVersionNegotiationFailure: function (description) {
-      Meteor._debug(description);
+      console.error(description);
     },
     heartbeatInterval: 17500,
     heartbeatTimeout: 15000,
@@ -67,7 +69,7 @@ var Connection = function (url, options) {
   if (typeof url === "object") {
     self._stream = url;
   } else {
-    self._stream = new LivedataTest.ClientStream(url, {
+    self._stream = new ClientStream(url, {
       retry: options.retry,
       headers: options.headers,
       _sockjsOptions: options._sockjsOptions,
@@ -191,7 +193,7 @@ var Connection = function (url, options) {
   // if we're blocking a migration, the retry func
   self._retryMigrate = null;
 
-  self.__flushBufferedWrites = Meteor.bindEnvironment(
+  self.__flushBufferedWrites = global.bindEnvironment(
     self._flushBufferedWrites, "flushing DDP buffered writes", self);
   // Collection name -> array of messages.
   self._bufferedWrites = {};
@@ -248,7 +250,7 @@ var Connection = function (url, options) {
       // compat.  Remove this 'if' once the server stops sending welcome
       // messages (stream_server.js).
       if (! (msg && msg.server_id))
-        Meteor._debug("discarding invalid livedata message", msg);
+        console.error("discarding invalid livedata message", msg);
       return;
     }
 
@@ -283,7 +285,7 @@ var Connection = function (url, options) {
     else if (msg.msg === 'error')
       self._livedata_error(msg);
     else
-      Meteor._debug("discarding unknown livedata message type", msg);
+      console.error("discarding unknown livedata message type", msg);
   };
 
   var onReset = function () {
@@ -385,9 +387,9 @@ var Connection = function (url, options) {
   };
 
   if (Meteor.isServer) {
-    self._stream.on('message', Meteor.bindEnvironment(onMessage, "handling DDP message"));
-    self._stream.on('reset', Meteor.bindEnvironment(onReset, "handling DDP reset"));
-    self._stream.on('disconnect', Meteor.bindEnvironment(onDisconnect, "handling DDP disconnect"));
+    self._stream.on('message', global.bindEnvironment(onMessage, "handling DDP message"));
+    self._stream.on('reset', global.bindEnvironment(onReset, "handling DDP reset"));
+    self._stream.on('disconnect', global.bindEnvironment(onDisconnect, "handling DDP disconnect"));
   } else {
     self._stream.on('message', onMessage);
     self._stream.on('reset', onReset);
@@ -786,7 +788,7 @@ _.extend(Connection.prototype, {
       // XXX would it be better form to do the binding in stream.on,
       // or caller, instead of here?
       // XXX improve error message (and how we report it)
-      callback = Meteor.bindEnvironment(
+      callback = global.bindEnvironment(
         callback,
         "delivering result of invoking '" + name + "'"
       );
@@ -862,7 +864,7 @@ _.extend(Connection.prototype, {
           if (Meteor.isServer) {
             // Because saveOriginals and retrieveOriginals aren't reentrant,
             // don't allow stubs to yield.
-            return Meteor._noYieldsAllowed(function () {
+            return global._noYieldsAllowed(function () {
               // re-clone, so that the stub can't affect our caller's values
               return stub.apply(invocation, EJSON.clone(args));
             });
@@ -903,7 +905,7 @@ _.extend(Connection.prototype, {
     //   if (options.throwStubExceptions) {
     //     throw exception;
     //   } else if (!exception.expected) {
-    //     Meteor._debug("Exception while simulating the effect of invoking '" +
+    //     console.error("Exception while simulating the effect of invoking '" +
     //       name + "'", exception, exception.stack);
     //   }
     // }
@@ -920,7 +922,7 @@ _.extend(Connection.prototype, {
         // result of the RPC. If an error occurred then print the error
         // to the console.
         callback = function (err) {
-          err && Meteor._debug("Error invoking Method '" + name + "':",
+          err && console.error("Error invoking Method '" + name + "':",
                                err.message);
         };
       } else {
@@ -1608,7 +1610,7 @@ _.extend(Connection.prototype, {
     // find the outstanding request
     // should be O(1) in nearly all realistic use cases
     if (_.isEmpty(self._outstandingMethodBlocks)) {
-      Meteor._debug("Received method result but no methods outstanding");
+      console.error("Received method result but no methods outstanding");
       return;
     }
     var currentMethodBlock = self._outstandingMethodBlocks[0].methods;
@@ -1620,7 +1622,7 @@ _.extend(Connection.prototype, {
     }
 
     if (!m) {
-      Meteor._debug("Can't match method response to original method call", msg);
+      console.error("Can't match method response to original method call", msg);
       return;
     }
 
@@ -1678,9 +1680,9 @@ _.extend(Connection.prototype, {
   },
 
   _livedata_error: function (msg) {
-    Meteor._debug("Received error from server: ", msg.reason);
+    console.error("Received error from server: ", msg.reason);
     if (msg.offendingMessage)
-      Meteor._debug("For: ", msg.offendingMessage);
+      console.error("For: ", msg.offendingMessage);
   },
 
   _callOnReconnectAndSendAppropriateOutstandingMethods: function() {
@@ -1741,7 +1743,7 @@ _.extend(Connection.prototype, {
   }
 });
 
-LivedataTest.Connection = Connection;
+// LivedataTest.Connection = Connection;
 
 // @param url {String} URL to Meteor app,
 //     e.g.:

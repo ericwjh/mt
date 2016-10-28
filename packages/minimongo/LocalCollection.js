@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson')
+var EJSON = require('../ejson')
 var DiffSequence = require('../diff-sequence')
 var _IdMap = require('./id_map')
 var Cursor = require('./Cursor')
@@ -7,7 +7,7 @@ var Matcher = require('./Matcher')
 var _modify = require('./modify')
 var Selector = require('./selector')
 var objectid = require('./objectid')
-var Random = require('../random/random')
+var Random = require('../random')
 var diff =require('./diff')
 require('./helpers')
 // XXX type checking on selectors (graceful error if malformed)
@@ -25,7 +25,7 @@ var LocalCollection = function (name) {
   // _id -> document (also containing id)
   self._docs = new _IdMap;
 
-  self._observeQueue = new Meteor._SynchronousQueue();
+  self._observeQueue = new global._SynchronousQueue();
 
   self.next_qid = 1; // live query id generator
 

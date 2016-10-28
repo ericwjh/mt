@@ -1,18 +1,15 @@
 var _ = require('underscore')
 var Fiber =   require('fibers');
-var StreamServer = require('./stream_server.js')
-var Random = require('../random/random.js')
+var StreamServer = require('./stream_server')
+var Random = require('../random')
 var stringifyDDP = require('../ddp-common/utils').stringifyDDP
 var parseDDP = require('../ddp-common/utils').parseDDP
-var DDPCommon = require('../ddp-common/index.js')
-var EJSON = require('../ejson/ejson.js')
-var Hook = require('../callback-hook/hook');
+var DDPCommon = require('../ddp-common')
+var EJSON = require('../ejson')
 var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var Session = require('./Session')
-// var DDPServer = {};
-// module.exports = DDPServer
-require('./writefence.js')
-// require('./crossbar.js')
+
+require('./writefence')
 
 var Server = module.exports = function (httpServer, options) {
   var self = this;
@@ -35,9 +32,9 @@ var Server = module.exports = function (httpServer, options) {
   // server and completes DDP version negotiation. Use an object instead
   // of an array so we can safely remove one from the list while
   // iterating over it.
-  self.onConnectionHook = new Hook({
-    debugPrintExceptions: "onConnection callback"
-  });
+  // self.onConnectionHook = new Hook({
+  //   debugPrintExceptions: "onConnection callback"
+  // });
 
   self.publish_handlers = {};
   self.universal_publish_handlers = [];
@@ -90,7 +87,7 @@ var Server = module.exports = function (httpServer, options) {
         socket._meteorSession.processMessage(msg);
       // } catch (e) {
       //   // XXX print stack nicely
-      //   Meteor._debug("Internal exception while processing message", msg,
+      //   console.error("Internal exception while processing message", msg,
       //                 e.message, e.stack);
       // }
     });
@@ -114,10 +111,10 @@ _.extend(Server.prototype, {
    * @memberOf Meteor
    * @importFromPackage meteor
    */
-  onConnection: function (fn) {
-    var self = this;
-    return self.onConnectionHook.register(fn);
-  },
+  // onConnection: function (fn) {
+  //   var self = this;
+  //   return self.onConnectionHook.register(fn);
+  // },
 
   _handleConnect: function (socket, msg) {
     var self = this;
@@ -152,11 +149,11 @@ _.extend(Server.prototype, {
     // global.server.options.heartbeatTimeout! This is a hack, but it's life.
     socket._meteorSession = new Session(self, socket, self.options);
     self.sessions[socket._meteorSession.id] = socket._meteorSession;
-    self.onConnectionHook.each(function (callback) {
-      if (socket._meteorSession)
-        callback(socket._meteorSession.connectionHandle);
-      return true;
-    });
+    // self.onConnectionHook.each(function (callback) {
+    //   if (socket._meteorSession)
+    //     callback(socket._meteorSession.connectionHandle);
+    //   return true;
+    // });
   },
   /**
    * Register a publish handler function.
@@ -195,7 +192,7 @@ _.extend(Server.prototype, {
     options = options || {};
 
     if (name && name in self.publish_handlers) {
-      Meteor._debug("Ignoring duplicate publish named '" + name + "'");
+      console.error("Ignoring duplicate publish named '" + name + "'");
       return;
     }
 
@@ -209,7 +206,7 @@ _.extend(Server.prototype, {
 //       // calling publish from your app code.)
 //       if (!self.warned_about_autopublish) {
 //         self.warned_about_autopublish = true;
-//         Meteor._debug(
+//         console.error(
 // "** You've set up some data subscriptions with Meteor.publish(), but\n" +
 // "** you still have autopublish turned on. Because autopublish is still\n" +
 // "** on, your Meteor.publish() calls won't have much effect. All data\n" +
@@ -293,7 +290,7 @@ _.extend(Server.prototype, {
       // run the callback in this fiber before returning, but we do it
       // anyway for regularity.
       // XXX improve error message (and how we report it)
-      callback = Meteor.bindEnvironment(
+      callback = global.bindEnvironment(
         callback,
         "delivering result of invoking '" + name + "'"
       );
@@ -385,10 +382,10 @@ var wrapInternalException = function (exception, context) {
   // tests can set the 'expected' flag on an exception so it won't go to the
   // server log
   if (!exception.expected) {
-    Meteor._debug("Exception " + context, exception.stack);
+    console.error("Exception " + context, exception.stack);
     if (exception.sanitizedError) {
-      Meteor._debug("Sanitized and reported to the client as:", exception.sanitizedError.message);
-      Meteor._debug();
+      console.error("Sanitized and reported to the client as:", exception.sanitizedError.message);
+      console.error();
     }
   }
 
@@ -399,7 +396,7 @@ var wrapInternalException = function (exception, context) {
   if (exception.sanitizedError) {
     if (exception.sanitizedError instanceof Meteor.Error)
       return exception.sanitizedError;
-    Meteor._debug("Exception " + context + " provides a sanitizedError that " +
+    console.error("Exception " + context + " provides a sanitizedError that " +
                   "is not a Meteor.Error; ignoring");
   }
 

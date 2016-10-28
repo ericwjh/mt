@@ -7,7 +7,7 @@
 // - If the return value has an _id field, verify that it matches the
 //   original _id field
 // - If the return value doesn't have an _id field, add it back.
-var wrapTransform = function (transform) {
+function wrapTransform(transform) {
   if (! transform)
     return null;
 

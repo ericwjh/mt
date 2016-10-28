@@ -1,7 +1,7 @@
 var utlis = require('./utils.js')
 var RandomStream = require('./random_stream.js')
 module.exports = {
-	Heartbeat: require('./heartbeat.js'),
+	// Heartbeat: require('./heartbeat.js'),
 	parseDDP: utlis.parseDDP,
 	stringifyDDP: utlis.stringifyDDP,
 	SUPPORTED_DDP_VERSIONS: utlis.SUPPORTED_DDP_VERSIONS,

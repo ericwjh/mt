@@ -1,1 +1,1 @@
-module.exports = new Meteor.EnvironmentVariable
+module.exports = new global.EnvironmentVariable

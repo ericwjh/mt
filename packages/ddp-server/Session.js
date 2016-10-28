@@ -1,12 +1,14 @@
 var _ = require('underscore')
 var Fiber =   require('fibers');
+var _DoubleEndedQueue = require('double-ended-queue')
+
 var stringifyDDP = require('../ddp-common/utils').stringifyDDP
-var Random = require('../random/random.js')
+var Random = require('../random')
 var Subscription = require('./Subscription')
 var SessionCollectionView = require('./SessionCollectionView')
-var RateLimiter = require('../rate-limit/rate-limit.js')
+var RateLimiter = require('../rate-limit')
 var MethodInvocation = require('../ddp-common/method_invocation')
-var WriteFence = require('./WriteFence')
+var WriteFence = require('./writeFence')
 var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var Session = module.exports = function (server, socket, options) {
   var self = this;
@@ -19,7 +21,7 @@ var Session = module.exports = function (server, socket, options) {
 
   // set to null when the session is destroyed. multiple places below
   // use this to determine if the session is alive or not.
-  self.inQueue = new Meteor._DoubleEndedQueue();
+  self.inQueue = new _DoubleEndedQueue();
 
   self.blocked = false;
   self.workerRunning = false;
@@ -65,7 +67,7 @@ var Session = module.exports = function (server, socket, options) {
       self.close();
     },
     onClose: function (fn) {
-      var cb = Meteor.bindEnvironment(fn, "connection onClose callback");
+      var cb = global.bindEnvironment(fn, "connection onClose callback");
       if (self.inQueue) {
         self._closeCallbacks.push(cb);
       } else {
@@ -357,11 +359,13 @@ _.extend(Session.prototype, {
         return;
       }
 
-      if (_.has(self._namedSubs, msg.id))
+      if (_.has(self._namedSubs, msg.id)){
         // subs are idempotent, or rather, they are ignored if a sub
         // with that id already exists. this is important during
         // reconnect.
         return;
+      }
+        
 
       // XXX It'd be much better if we had generic hooks where any package can
       // hook into subscription handling, but in the mean while we special case
@@ -393,7 +397,6 @@ _.extend(Session.prototype, {
       // }
 
       var handler = self.server.publish_handlers[msg.name];
-
       self._startSubscription(handler, msg.id, msg.params, msg.name);
 
     },
@@ -655,7 +658,7 @@ _.extend(Session.prototype, {
     // Start sending messages again, beginning with the diff from the previous
     // state of the world to the current state. No yields are allowed during
     // this diff, so that other changes cannot interleave.
-    Meteor._noYieldsAllowed(function () {
+    global._noYieldsAllowed(function () {
       self._isSending = true;
       self._diffCollectionViews(beforeCVs);
       if (!_.isEmpty(self._pendingReady)) {

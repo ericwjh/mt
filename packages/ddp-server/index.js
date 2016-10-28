@@ -1,9 +1,4 @@
-// var _ = require('underscore')
-// if (process.env.DDP_DEFAULT_CONNECTION_URL) {
-//   __meteor_runtime_config__.DDP_DEFAULT_CONNECTION_URL =
-//     process.env.DDP_DEFAULT_CONNECTION_URL;
-// }
-var Server = require('./livedata_server.js')
+var Server = require('./livedata_server')
 var Crossbar = require('./Crossbar')
 module.exports = function(httpServer){
 	var server = new Server(httpServer);

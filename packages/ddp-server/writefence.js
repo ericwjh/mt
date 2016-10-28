@@ -21,7 +21,7 @@ module.exports = WriteFence
 // that writes to databases should register their writes with it using
 // beginWrite().
 //
-global.CurrentWriteFence = new Meteor.EnvironmentVariable;
+global.CurrentWriteFence = new global.EnvironmentVariable;
 
 _.extend(WriteFence.prototype, {
   // Start tracking a write, and return an object to represent it. The
@@ -103,7 +103,7 @@ _.extend(WriteFence.prototype, {
           func(self);
         } catch (err) {
           console.log(err)
-          Meteor._debug("exception in write fence callback:", err);
+          console.error("exception in write fence callback:", err);
         }
       }
 

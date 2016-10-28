@@ -2,19 +2,19 @@ require('mt/client')
 var connect = require('mt/client/connect')
 var connection = connect('/')
 var Tracker = require('mt/packages/tracker')
-var Collection = require('mt/packages/mongo/collection.js')
+var Collection = require('mt/packages/mongo/collection')
 connection.subscribe('A', function(err){
 	console.log(err)
 })
+// var L = new Collection(null)
+// L.insert({asdf:1})
+// var one = L.findOne()
+// console.log(one.asdf == 1)
+// L.update({asdf:1}, {$set:{b:2}})
+// var one = L.findOne()
+// console.log(one.b == 2)
+// L.remove({})
 var A = new Collection('a')
-var L = new Collection(null)
-L.insert({asdf:1})
-var one = L.findOne()
-console.log(one.asdf == 1)
-L.update({asdf:1}, {$set:{b:2}})
-var one = L.findOne()
-console.log(one.b == 2)
-L.remove({})
 
 global.A = A
 Tracker.autorun(function(){
@@ -40,3 +40,13 @@ connection.call('M', function(err,m){console.log(m)})
 connection.call('dealyAdd', 1, 2, 3, function(err, sum){
 	console.log(err, sum)
 })
+
+function sleep(ms = 0) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+(async () => {
+  console.log('a', new Date);
+  await sleep(1000);
+  console.log('b', new Date);
+})()

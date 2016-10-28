@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson')
+var EJSON = require('../ejson')
 // Knows how to compile a fields projection to a predicate function.
 // @returns - Function: a closure that filters out an object according to the
 //            fields projection rules:
@@ -174,3 +174,4 @@ function _checkSupportedProjection(fields) {
       throw MinimongoError("Projection values should be one of 1, 0, true, or false");
   });
 };
+exports._checkSupportedProjection = _checkSupportedProjection

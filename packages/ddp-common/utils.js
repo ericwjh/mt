@@ -1,17 +1,17 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson.js')
+var EJSON = require('../ejson')
 // var SUPPORTED_DDP_VERSIONS = [ '1', 'pre2', 'pre1' ];
 
-var parseDDP = function (stringMessage) {
+function parseDDP(stringMessage) {
   try {
     var msg = JSON.parse(stringMessage);
   } catch (e) {
-    Meteor._debug("Discarding message with invalid JSON", stringMessage);
+    console.error("Discarding message with invalid JSON", stringMessage);
     return null;
   }
   // DDP messages must be objects.
   if (msg === null || typeof msg !== 'object') {
-    Meteor._debug("Discarding non-object DDP message", stringMessage);
+    console.error("Discarding non-object DDP message", stringMessage);
     return null;
   }
 

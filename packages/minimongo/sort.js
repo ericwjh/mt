@@ -416,3 +416,9 @@ function composeComparators(comparatorArray) {
     return 0;
   };
 };
+
+exports.Sorter.prototype.combineIntoProjection = function (projection) {
+  var self = this;
+  var specPaths = Minimongo._pathsElidingNumericKeys(self._getPaths());
+  return combineImportantPathsIntoProjection(specPaths, projection);
+};

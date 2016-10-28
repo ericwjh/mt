@@ -1,8 +1,7 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson.js')
-var MongoID = require('../mongo-id/id.js')
+var EJSON = require('../ejson')
+var MongoID = require('../mongo-id')
 // The minimongo selector compiler!
-
 
 // Takes in a selector that could match a key-indexed value in a document; eg,
 // {$gt: 5, $lt: 9}, or a regular expression, or any non-expression object (to
@@ -26,8 +25,7 @@ exports.compileValueSelector = compileValueSelector
 // Given an element matcher (which evaluates a single value), returns a branched
 // value (which evaluates the element matcher on all the branches and returns a
 // more structured return value possibly including arrayIndices).
-var convertElementMatcherToBranchedMatcher = function (
-    elementMatcher, options) {
+function convertElementMatcherToBranchedMatcher(elementMatcher, options) {
   options = options || {};
   return function (branches) {
     var expanded = branches;
@@ -86,7 +84,7 @@ exports.regexpElementMatcher = function (regexp) {
 
 // Takes something that is not an operator object and returns an element matcher
 // for equality with that thing.
-var equalityElementMatcher = function (elementSelector) {
+function equalityElementMatcher(elementSelector) {
   if (isOperatorObject(elementSelector))
     throw Error("Can't create equalityValueSelector for operator object");
 
@@ -106,7 +104,7 @@ var equalityElementMatcher = function (elementSelector) {
 exports.equalityElementMatcher = equalityElementMatcher
 // Takes an operator object (an object with $ keys) and returns a branched
 // matcher for it.
-var operatorBranchedMatcher = function (valueSelector, matcher, isRoot) {
+function operatorBranchedMatcher(valueSelector, matcher, isRoot) {
   // Each valueSelector works separately on the various branches.  So one
   // operator can match one branch and another can match another branch.  This
   // is OK.
@@ -141,7 +139,7 @@ var operatorBranchedMatcher = function (valueSelector, matcher, isRoot) {
   return andBranchedMatchers(operatorMatchers);
 };
 
-var compileArrayOfDocumentSelectors = function (
+function compileArrayOfDocumentSelectors(
     selectors, matcher, inElemMatch) {
   if (!isArray(selectors) || _.isEmpty(selectors))
     throw Error("$and/$or/$nor must be nonempty array");

@@ -422,7 +422,7 @@ Meteor.isServer && Tinytest.addAsync("check - non-fiber check works", function (
 
   // We can only call test.isTrue inside normal Meteor Fibery code, so give us a
   // bindEnvironment way to get back.
-  var report = Meteor.bindEnvironment(function (success) {
+  var report = global.bindEnvironment(function (success) {
     test.isTrue(success);
     onComplete();
   });

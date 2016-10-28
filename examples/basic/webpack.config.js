@@ -13,7 +13,11 @@ var serverPort = 3000;
 var contentBase = 'http://' + host + ':' + serverPort
 
 var babelQuery = {
-	presets: ["babel-preset-es2015-without-strict", "babel-preset-stage-1", "babel-preset-react"].map(require.resolve)
+	presets: ["babel-preset-es2015", "babel-preset-stage-0", "babel-preset-react"]
+		.map(require.resolve),
+
+	plugins: ["babel-plugin-syntax-async-functions"]
+		.map(require.resolve)
 }
 
 var config = {
@@ -33,17 +37,19 @@ var config = {
 		}
 	},
 	module: {
-		loaders: [{
-			test: /\.(jsx?|coffee|iced)$/,
-			loader: require.resolve('babel-loader'),
-			exclude: function(filename) {
-				if (filename.indexOf(path.resolve(__dirname, '..')) == 0) {
-					return /node_modules/.test(filename)
-				}
-				return false
-			},
-			query: babelQuery
-		}, {
+		loaders: [
+		// {
+		// 	test: /\.(jsx?|coffee|iced)$/,
+		// 	loader: require.resolve('babel-loader'),
+		// 	exclude: function(filename) {
+		// 		if (filename.indexOf(path.resolve(__dirname, '..')) == 0) {
+		// 			return /node_modules/.test(filename)
+		// 		}
+		// 		return false
+		// 	},
+		// 	query: babelQuery
+		// }, 
+		{
 			test: /\.css$/,
 			loaders: ['style-loader', 'css-loader']
 		}, {

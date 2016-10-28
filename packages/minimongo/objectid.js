@@ -1,5 +1,6 @@
 var _ =   require('underscore');
-var MongoID = require('../mongo-id/id.js')
+var MongoID = require('../mongo-id')
+
 // Is this selector just shorthand for lookup by _id?
 exports._selectorIsId = function (selector) {
   return (typeof selector === "string") ||
@@ -55,5 +56,3 @@ exports._idsMatchedBySelector = function (selector) {
 
   return null;
 };
-
-

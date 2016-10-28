@@ -1,7 +1,7 @@
 var _ = require('underscore')
 var LocalCollection = require('./LocalCollection')
 var Matcher = require('./Matcher')
-var EJSON = require('../ejson/ejson')
+var EJSON = require('../ejson')
 var objectid = require('./objectid')
 var _compileProjection = require('./projection')
 var wrapTransform = require('./wrap_transform')
@@ -157,9 +157,9 @@ Cursor.prototype._publishCursor = function (sub) {
   // if (! Package.mongo) {
   //   throw new Error("Can't publish from Minimongo without the `mongo` package.");
   // }
-  var Mongo = require('../mongo/collection.js')
+  var Collection = require('../mongo/collection.js')
   console.trace()
-  return Mongo.Collection._publishCursor(self, sub, collection);
+  return Collection._publishCursor(self, sub, collection);
 };
 
 Cursor.prototype._getCollectionName = function () {

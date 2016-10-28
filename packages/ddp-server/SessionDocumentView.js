@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson.js')
+var EJSON = require('../ejson')
 // This file contains classes:
 // * Session - The server's connection to a single DDP client
 // * Subscription - A single subscription for a single client

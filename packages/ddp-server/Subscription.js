@@ -1,6 +1,6 @@
-var Random = require('../random/random.js')
-var MongoID = require('../mongo-id/id.js')
-var EJSON = require('../ejson/ejson.js')
+var Random = require('../random')
+var MongoID = require('../mongo-id')
+var EJSON = require('../ejson')
 var _ = require('underscore')
 // ctor for a sub handle: the input to each publish function
 
@@ -103,8 +103,10 @@ _.extend(Subscription.prototype, {
     // }
 
     // Did the handler call this.error or this.stop?
-    if (self._isDeactivated())
+    if (self._isDeactivated()) {
+      console.log('Did the handler call this.error or this.stop?')
       return;
+    }
 
     self._publishHandlerResult(res);
   },
@@ -210,7 +212,7 @@ _.extend(Subscription.prototype, {
   // Send remove messages for every document.
   _removeAllDocuments: function () {
     var self = this;
-    Meteor._noYieldsAllowed(function () {
+    global._noYieldsAllowed(function () {
       _.each(self._documents, function(collectionDocs, collectionName) {
         // Iterate over _.keys instead of the dictionary itself, since we'll be
         // mutating it.

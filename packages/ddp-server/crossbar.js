@@ -1,6 +1,6 @@
 var _ = require('underscore')
-var EJSON = require('../ejson/ejson.js')
-var MongoID = require('../mongo-id/id')
+var EJSON = require('../ejson')
+var MongoID = require('../mongo-id')
 // A "crossbar" is a class that provides structured notification registration.
 // See _match for the definition of how a notification matches a trigger.
 // All notifications and triggers must have a string key named 'collection'.

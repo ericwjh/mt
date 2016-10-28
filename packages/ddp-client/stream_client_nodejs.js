@@ -163,12 +163,12 @@ _.extend(LivedataTest.ClientStream.prototype, {
       },
       self.CONNECT_TIMEOUT);
 
-    self.client.on('open', Meteor.bindEnvironment(function () {
+    self.client.on('open', global.bindEnvironment(function () {
       return self._onConnect(client);
     }, "stream connect callback"));
 
     var clientOnIfCurrent = function (event, description, f) {
-      self.client.on(event, Meteor.bindEnvironment(function () {
+      self.client.on(event, global.bindEnvironment(function () {
         // Ignore events from any connection we've already cleaned up.
         if (client !== self.client)
           return;
@@ -178,7 +178,7 @@ _.extend(LivedataTest.ClientStream.prototype, {
 
     clientOnIfCurrent('error', 'stream error callback', function (error) {
       if (!self.options._dontPrintErrors)
-        Meteor._debug("stream error", error.message);
+        console.error("stream error", error.message);
 
       // Faye's 'error' object is not a JS error (and among other things,
       // doesn't stringify well). Convert it to one.

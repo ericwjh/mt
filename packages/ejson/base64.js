@@ -8,18 +8,16 @@ for (var i = 0; i < BASE_64_CHARS.length; i++) {
   BASE_64_VALS[BASE_64_CHARS.charAt(i)] = i;
 };
 
-var Base64 = {};
-module.exports = Base64
-Base64.encode = function (array) {
+exports.encode = function (array) {
 
   if (typeof array === "string") {
     var str = array;
-    array = Base64.newBinary(str.length);
+    array = exports.newBinary(str.length);
     for (var i = 0; i < str.length; i++) {
       var ch = str.charCodeAt(i);
       if (ch > 0xFF) {
         throw new Error(
-          "Not ascii. Base64.encode can only take ascii strings.");
+          "Not ascii. exports.encode can only take ascii strings.");
       }
       array[i] = ch;
     }
@@ -81,9 +79,9 @@ var getVal = function (ch) {
 // XXX This is a weird place for this to live, but it's used both by
 // this package and 'ejson', and we can't put it in 'ejson' without
 // introducing a circular dependency. It should probably be in its own
-// package or as a helper in a package that both 'base64' and 'ejson'
+// package or as a helper in a package that both 'exports' and 'ejson'
 // use.
-Base64.newBinary = function (len) {
+exports.newBinary = function (len) {
   if (typeof Uint8Array === 'undefined' || typeof ArrayBuffer === 'undefined') {
     var ret = [];
     for (var i = 0; i < len; i++) {
@@ -95,14 +93,14 @@ Base64.newBinary = function (len) {
   return new Uint8Array(new ArrayBuffer(len));
 };
 
-Base64.decode = function (str) {
+exports.decode = function (str) {
   var len = Math.floor((str.length*3)/4);
   if (str.charAt(str.length - 1) == '=') {
     len--;
     if (str.charAt(str.length - 2) == '=')
       len--;
   }
-  var arr = Base64.newBinary(len);
+  var arr = exports.newBinary(len);
 
   var one = null;
   var two = null;
@@ -116,12 +114,12 @@ Base64.decode = function (str) {
     switch (i % 4) {
     case 0:
       if (v < 0)
-        throw new Error('invalid base64 string');
+        throw new Error('invalid exports string');
       one = v << 2;
       break;
     case 1:
       if (v < 0)
-        throw new Error('invalid base64 string');
+        throw new Error('invalid exports string');
       one = one | (v >> 4);
       arr[j++] = one;
       two = (v & 0x0F) << 4;
