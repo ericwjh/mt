@@ -219,7 +219,7 @@ function _pathsElidingNumericKeys(paths) {
     return _.reject(path.split('.'), isNumericKey).join('.');
   });
 };
-
+Matcher._pathsElidingNumericKeys = _pathsElidingNumericKeys
 global.combineImportantPathsIntoProjection = function (paths, projection) {
   var prjDetails = projectionDetails(projection);
   var tree = prjDetails.tree;

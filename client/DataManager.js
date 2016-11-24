@@ -1,3 +1,4 @@
+var Tracker = require('../packages/tracker')
 module.exports = class DataManager {
   constructor(component) {
     this.component = component;

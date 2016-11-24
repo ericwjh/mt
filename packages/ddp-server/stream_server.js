@@ -80,7 +80,7 @@ var StreamServer = module.exports = function(httpServer, pathPrefix) {
   // for "request" to add its own.
   var SHORT_SOCKET_TIMEOUT = 5 * 1000;
   var LONG_SOCKET_TIMEOUT = 120 * 1000
-  _timeoutAdjustmentRequestCallback = function(req, res) {
+  function _timeoutAdjustmentRequestCallback(req, res) {
     req.setTimeout(LONG_SOCKET_TIMEOUT);
     var finishListeners = res.listeners('finish');
     res.removeAllListeners('finish');

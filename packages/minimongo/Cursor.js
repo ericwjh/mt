@@ -8,6 +8,8 @@ var wrapTransform = require('./wrap_transform')
 var observe = require('./observe')
 var computations = require('../tracker/computations');  
 var Dependency = require('../tracker/Dependency');  
+var Sorter = require('./Sorter')
+var _IdMap = require('./id_map')
 
 var Cursor = function (collection, selector, options) {
   var self = this;
@@ -26,7 +28,7 @@ var Cursor = function (collection, selector, options) {
   } else {
     self._selectorId = undefined;
     if (self.matcher.hasGeoQuery() || options.sort) {
-      self.sorter = new Minimongo.Sorter(options.sort || [],
+      self.sorter = new Sorter(options.sort || [],
                                          { matcher: self.matcher });
     }
   }
@@ -207,7 +209,7 @@ _.extend(Cursor.prototype, {
       matcher: self.matcher, // not fast pathed
       sorter: ordered && self.sorter,
       distances: (
-        self.matcher.hasGeoQuery() && ordered && new LocalCollection._IdMap),
+        self.matcher.hasGeoQuery() && ordered && new _IdMap),
       resultsSnapshot: null,
       ordered: ordered,
       cursor: self,
@@ -224,7 +226,7 @@ _.extend(Cursor.prototype, {
     query.results = self._getRawObjects({
       ordered: ordered, distances: query.distances});
     if (self.collection.paused)
-      query.resultsSnapshot = (ordered ? [] : new LocalCollection._IdMap);
+      query.resultsSnapshot = (ordered ? [] : new _IdMap);
 
     // wrap callbacks we were passed. callbacks only fire when not paused and
     // are never undefined
@@ -319,7 +321,7 @@ Cursor.prototype._getRawObjects = function (options) {
 
   // XXX use OrderedDict instead of array, and make IdMap and OrderedDict
   // compatible
-  var results = options.ordered ? [] : new LocalCollection._IdMap;
+  var results = options.ordered ? [] : new _IdMap;
 
   // fast path for single ID value
   if (self._selectorId !== undefined) {
@@ -350,7 +352,7 @@ Cursor.prototype._getRawObjects = function (options) {
       distances = options.distances;
       distances.clear();
     } else {
-      distances = new LocalCollection._IdMap();
+      distances = new  _IdMap();
     }
   }
 

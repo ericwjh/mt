@@ -19,8 +19,9 @@ httpServer.listen(process.env.PORT, function() {
 	console.log('listen on', process.env.PORT)
 })
 
-var server = mt.registerDDP(httpServer)
-mt.connectMongo('mongodb://localhost/test')
+var server = mt(httpServer)
+var connectMongo = require('mt/server/connectMongo')
+connectMongo('mongodb://localhost/test')
 
 Fibers(function() {
 		

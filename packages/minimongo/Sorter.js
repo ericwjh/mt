@@ -1,4 +1,9 @@
 var _ = require('underscore')
+var Matcher = require('./Matcher')
+var selector = require('./selector')
+var makeLookupFunction = selector.makeLookupFunction
+var expandArraysInBranches = selector.expandArraysInBranches
+var _f = selector._f
 // Give a sort spec, which can be in any of these forms:
 //   {"key1": 1, "key2": -1}
 //   [["key1", "asc"], ["key2", "desc"]]
@@ -12,7 +17,7 @@ var _ = require('underscore')
 // first object comes first in order, 1 if the second object comes
 // first, or 0 if neither object comes before the other.
 
-exports.Sorter = function (spec, options) {
+var Sorter = module.exports = function (spec, options) {
   var self = this;
   options = options || {};
 
@@ -78,7 +83,7 @@ exports.Sorter = function (spec, options) {
 
 // In addition to these methods, sorter_project.js defines combineIntoProjection
 // on the server only.
-_.extend(exports.Sorter.prototype, {
+_.extend(Sorter.prototype, {
   getComparator: function (options) {
     var self = this;
 
@@ -263,7 +268,7 @@ _.extend(exports.Sorter.prototype, {
     var self = this;
     var invert = !self._sortSpecParts[i].ascending;
     return function (key1, key2) {
-      var compare = LocalCollection._f._cmp(key1[i], key2[i]);
+      var compare =  _f._cmp(key1[i], key2[i]);
       if (invert)
         compare = -compare;
       return compare;
@@ -417,8 +422,9 @@ function composeComparators(comparatorArray) {
   };
 };
 
-exports.Sorter.prototype.combineIntoProjection = function (projection) {
+Sorter.prototype.combineIntoProjection = function (projection) {
   var self = this;
-  var specPaths = Minimongo._pathsElidingNumericKeys(self._getPaths());
+  var specPaths = Matcher._pathsElidingNumericKeys(self._getPaths());
   return combineImportantPathsIntoProjection(specPaths, projection);
 };
+

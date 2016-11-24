@@ -56,3 +56,13 @@ exports.afterFlush = function (f) {
   afterFlushCallbacks.push(f);
   requireFlush();
 };
+
+exports.nonreactive = function (f) {
+  var previous = computations.currentComputation;
+  computations.setCurrentComputation(null);
+  try {
+    return f();
+  } finally {
+    computations.setCurrentComputation(previous);
+  }
+};

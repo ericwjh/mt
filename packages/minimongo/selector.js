@@ -780,48 +780,48 @@ exports.expandArraysInBranches = expandArraysInBranches
 // };
 
 
-// // NB: We are cheating and using this function to implement "AND" for both
-// // "document matchers" and "branched matchers". They both return result objects
-// // but the argument is different: for the former it's a whole doc, whereas for
-// // the latter it's an array of "branched values".
-// var andSomeMatchers = function (subMatchers) {
-//   if (subMatchers.length === 0)
-//     return everythingMatcher;
-//   if (subMatchers.length === 1)
-//     return subMatchers[0];
+// NB: We are cheating and using this function to implement "AND" for both
+// "document matchers" and "branched matchers". They both return result objects
+// but the argument is different: for the former it's a whole doc, whereas for
+// the latter it's an array of "branched values".
+var andSomeMatchers = function (subMatchers) {
+  if (subMatchers.length === 0)
+    return everythingMatcher;
+  if (subMatchers.length === 1)
+    return subMatchers[0];
 
-//   return function (docOrBranches) {
-//     var ret = {};
-//     ret.result = _.all(subMatchers, function (f) {
-//       var subResult = f(docOrBranches);
-//       // Copy a 'distance' number out of the first sub-matcher that has
-//       // one. Yes, this means that if there are multiple $near fields in a
-//       // query, something arbitrary happens; this appears to be consistent with
-//       // Mongo.
-//       if (subResult.result && subResult.distance !== undefined
-//           && ret.distance === undefined) {
-//         ret.distance = subResult.distance;
-//       }
-//       // Similarly, propagate arrayIndices from sub-matchers... but to match
-//       // MongoDB behavior, this time the *last* sub-matcher with arrayIndices
-//       // wins.
-//       if (subResult.result && subResult.arrayIndices) {
-//         ret.arrayIndices = subResult.arrayIndices;
-//       }
-//       return subResult.result;
-//     });
+  return function (docOrBranches) {
+    var ret = {};
+    ret.result = _.all(subMatchers, function (f) {
+      var subResult = f(docOrBranches);
+      // Copy a 'distance' number out of the first sub-matcher that has
+      // one. Yes, this means that if there are multiple $near fields in a
+      // query, something arbitrary happens; this appears to be consistent with
+      // Mongo.
+      if (subResult.result && subResult.distance !== undefined
+          && ret.distance === undefined) {
+        ret.distance = subResult.distance;
+      }
+      // Similarly, propagate arrayIndices from sub-matchers... but to match
+      // MongoDB behavior, this time the *last* sub-matcher with arrayIndices
+      // wins.
+      if (subResult.result && subResult.arrayIndices) {
+        ret.arrayIndices = subResult.arrayIndices;
+      }
+      return subResult.result;
+    });
 
-//     // If we didn't actually match, forget any extra metadata we came up with.
-//     if (!ret.result) {
-//       delete ret.distance;
-//       delete ret.arrayIndices;
-//     }
-//     return ret;
-//   };
-// };
+    // If we didn't actually match, forget any extra metadata we came up with.
+    if (!ret.result) {
+      delete ret.distance;
+      delete ret.arrayIndices;
+    }
+    return ret;
+  };
+};
 
-// var andDocumentMatchers = andSomeMatchers;
-// var andBranchedMatchers = andSomeMatchers;
+var andDocumentMatchers = andSomeMatchers;
+var andBranchedMatchers = andSomeMatchers;
 
 
 // helpers used by compiled selector code

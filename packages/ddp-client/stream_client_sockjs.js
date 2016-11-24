@@ -168,7 +168,7 @@ _.extend(ClientStream.prototype, {
       self._connected();
     };
     self.socket.onmessage = function (data) {
-      self._heartbeat_received();
+      // self._heartbeat_received();
 
       if (self.currentStatus.connected)
         _.each(self.eventCallbacks.message, function (callback) {

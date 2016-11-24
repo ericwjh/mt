@@ -8,7 +8,7 @@ var Subscription = require('./Subscription')
 var SessionCollectionView = require('./SessionCollectionView')
 var RateLimiter = require('../rate-limit')
 var MethodInvocation = require('../ddp-common/method_invocation')
-var WriteFence = require('./writeFence')
+var WriteFence = require('./writefence')
 var CurrentInvocation = require('../ddp-common/CurrentInvocation')
 var Session = module.exports = function (server, socket, options) {
   var self = this;

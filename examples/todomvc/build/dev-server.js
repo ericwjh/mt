@@ -60,6 +60,8 @@ app.use(staticPath, express.static('./static'))
 var http = require("http");
 
 var mt = require('mt/server')
+var connectMongo = require('mt/server/connectMongo')
+
 var Fibers = require('fibers')
 var Future = require('fibers/future')
 
@@ -69,8 +71,8 @@ httpServer.listen(port, function() {
   console.log('listen on', port)
 })
 
-var server = mt.registerDDP(httpServer)
-mt.connectMongo('mongodb://localhost/test')
+var server = mt(httpServer)
+connectMongo('mongodb://localhost/test')
 
 Fibers(function() {
   var Collection = require('mt/packages/mongo/collection.js')
